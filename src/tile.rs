@@ -71,26 +71,13 @@ impl Tile {
             let vert = compile_shader_from_source(
                 &gl,
                 glow::VERTEX_SHADER,
-                r#"
-            #version 330 core
-            layout (location = 0) in vec3 p;
-
-            void main() {
-                gl_Position = vec4(p.x, p.y, p.z, 1.0);
-            }"#,
+                include_bytes!("../shaders/tile.v.glsl"),
             );
 
             let frag = compile_shader_from_source(
                 &gl,
                 glow::FRAGMENT_SHADER,
-                r#"
-            #version 330 core
-
-            out vec4 col;
-
-            void main() {
-                col = vec4(1.0, 0.0, 0.0, 1.0);
-            }"#,
+                include_bytes!("../shaders/tile.f.glsl"),
             );
 
             let program = gl.create_program().unwrap();
@@ -128,10 +115,10 @@ impl Tile {
 unsafe fn compile_shader_from_source(
     gl: &glow::Context,
     shader_type: u32,
-    src: &str,
+    src: &[u8],
 ) -> glow::NativeShader {
     let shader = gl.create_shader(shader_type).unwrap();
-    gl.shader_source(shader, src);
+    gl.shader_source(shader, std::str::from_utf8(src).unwrap());
     gl.compile_shader(shader);
     if !gl.get_shader_compile_status(shader) {
         panic!("{}", gl.get_shader_info_log(shader));
