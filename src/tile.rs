@@ -63,7 +63,7 @@ impl Tile {
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
                 bytemuck::cast_slice(&offsets_array[..]),
-                glow::DYNAMIC_DRAW,
+                glow::STATIC_DRAW,
             );
             gl.vertex_attrib_pointer_f32(2, 2, glow::FLOAT, false, 0, 0);
             gl.vertex_attrib_divisor(2, 1);
@@ -139,6 +139,19 @@ impl Tile {
                 self.num_instances as i32,
             );
             gl.bind_vertex_array(None);
+        }
+    }
+
+    pub fn set_offsets(&mut self, gl: &glow::Context, offsets: &[f32]) {
+        let count = offsets.len() / 2;
+        self.num_instances = count as u32;
+        unsafe {
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.offsets));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&offsets[..]),
+                glow::STATIC_DRAW,
+            );
         }
     }
 }

@@ -20,7 +20,9 @@ fn main() {
     let gl =
         unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
 
-    let mut tile = Some(Tile::new(&gl));
+    let mut tile = Tile::new(&gl);
+    tile.set_offsets(&gl, &[-1.3, -1.3, 0.2, 0.5]);
+    let mut tile = Some(tile);
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
@@ -30,7 +32,7 @@ fn main() {
                 tile.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
-                let tile = tile.as_ref().unwrap();
+                let tile = tile.as_mut().unwrap();
                 draw_window(&gl, &tile);
                 win.swap_buffers().unwrap();
             }
