@@ -20,7 +20,7 @@ fn main() {
     let gl =
         unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
 
-    let tile = Tile::new(&gl);
+    let tile = unsafe { Tile::new(&gl) };
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
