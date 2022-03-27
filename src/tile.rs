@@ -5,20 +5,17 @@ pub struct Tile {
     offsets: glow::NativeBuffer,
     vao: glow::NativeVertexArray,
     program: glow::NativeProgram,
+    num_instances: u32,
 }
 
 impl Tile {
-    pub unsafe fn new(gl: &glow::Context) -> Self {
-        Self::new_impl(gl)
-    }
-
-    fn new_impl(gl: &glow::Context) -> Self {
+    pub fn new(gl: &glow::Context) -> Self {
         let (vbo, offsets, vao) = unsafe {
             let vertices: [f32; 20] = [
-                -0.1, -0.1, 0.0, 0.0, 1.0, // bottom left
-                0.1, -0.1, 0.0, 1.0, 1.0, // bottom right
-                -0.1, 0.1, 0.0, 0.0, 0.0, // top left
-                0.1, 0.1, 0.0, 1.0, 0.0, // top right
+                0.0, 0.0, 0.0, 0.0, 1.0, // bottom left
+                1.0, 0.0, 0.0, 1.0, 1.0, // bottom right
+                0.0, 1.0, 0.0, 0.0, 0.0, // top left
+                1.0, 1.0, 0.0, 1.0, 0.0, // top right
             ];
             let indices: [u32; 6] = [
                 0, 1, 2, // bottom left
@@ -60,7 +57,7 @@ impl Tile {
             gl.enable_vertex_attrib_array(1);
 
             // offsets
-            let offsets_array: [f32; 4] = [-0.2, -0.2, 0.2, 0.2];
+            let offsets_array: [f32; 2] = [0.0, 0.0];
             let offsets = gl.create_buffer().unwrap();
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(offsets));
             gl.buffer_data_u8_slice(
@@ -118,20 +115,31 @@ impl Tile {
             offsets,
             vao,
             program,
+            num_instances: 1,
         }
     }
 
-    pub unsafe fn cleanup(&self, gl: &glow::Context) {
-        gl.delete_buffer(self.vbo);
-        gl.delete_vertex_array(self.vao);
-        gl.delete_program(self.program);
+    pub fn cleanup(self, gl: &glow::Context) {
+        unsafe {
+            gl.delete_buffer(self.vbo);
+            gl.delete_vertex_array(self.vao);
+            gl.delete_program(self.program);
+        }
     }
 
-    pub unsafe fn render(&self, gl: &glow::Context) {
-        gl.use_program(Some(self.program));
-        gl.bind_vertex_array(Some(self.vao));
-        gl.draw_elements_instanced(glow::TRIANGLES, 6, glow::UNSIGNED_INT, 0, 2);
-        gl.bind_vertex_array(None);
+    pub fn render(&self, gl: &glow::Context) {
+        unsafe {
+            gl.use_program(Some(self.program));
+            gl.bind_vertex_array(Some(self.vao));
+            gl.draw_elements_instanced(
+                glow::TRIANGLES,
+                6,
+                glow::UNSIGNED_INT,
+                0,
+                self.num_instances as i32,
+            );
+            gl.bind_vertex_array(None);
+        }
     }
 }
 

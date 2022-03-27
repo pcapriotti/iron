@@ -20,16 +20,18 @@ fn main() {
     let gl =
         unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
 
-    let tile = unsafe { Tile::new(&gl) };
+    let mut tile = Some(Tile::new(&gl));
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {
-            Event::LoopDestroyed => unsafe {
+            Event::LoopDestroyed => {
+                let tile = tile.take().unwrap();
                 tile.cleanup(&gl);
-            },
+            }
             Event::RedrawRequested(_) => {
-                unsafe { draw_window(&gl, &tile) };
+                let tile = tile.as_ref().unwrap();
+                draw_window(&gl, &tile);
                 win.swap_buffers().unwrap();
             }
             Event::WindowEvent { event: ref e, .. } => {
@@ -55,9 +57,11 @@ fn main() {
     });
 }
 
-unsafe fn draw_window(gl: &glow::Context, tile: &Tile) {
-    gl.clear_color(0.46, 0.7, 0.76, 1.0);
-    gl.clear(glow::COLOR_BUFFER_BIT);
+fn draw_window(gl: &glow::Context, tile: &Tile) {
+    unsafe {
+        gl.clear_color(0.46, 0.7, 0.76, 1.0);
+        gl.clear(glow::COLOR_BUFFER_BIT);
+    }
 
     tile.render(&gl);
 }
