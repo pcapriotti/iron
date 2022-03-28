@@ -2,6 +2,9 @@
 layout (location = 0) in vec3 p;
 layout (location = 2) in vec2 off;
 
+uniform vec2 scale;
+
 void main() {
-    gl_Position = vec4(p.x + off.x, p.y + off.y, p.z, 1.0);
+    vec2 pos = (p.xy + off);
+    gl_Position = vec4(pos.xy * scale, p.z, 1.0);
 }

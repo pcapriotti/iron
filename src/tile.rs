@@ -1,4 +1,8 @@
+use crate::v2::V2;
 use glow::HasContext;
+
+const GAP: f32 = 0.1;
+const MARGIN: f32 = 0.08;
 
 pub struct Tile {
     vbo: glow::NativeBuffer,
@@ -142,7 +146,7 @@ impl Tile {
         }
     }
 
-    pub fn set_offsets(&mut self, gl: &glow::Context, offsets: &[f32]) {
+    fn set_offsets(&mut self, gl: &glow::Context, offsets: &[f32]) {
         let count = offsets.len() / 2;
         self.num_instances = count as u32;
         unsafe {
@@ -151,6 +155,38 @@ impl Tile {
                 glow::ARRAY_BUFFER,
                 bytemuck::cast_slice(&offsets[..]),
                 glow::STATIC_DRAW,
+            );
+        }
+    }
+
+    pub fn setup_grid(&mut self, gl: &glow::Context, size: &V2<u32>) {
+        let mut offsets = Vec::new();
+        let base = V2::new(
+            -(size.x as f32 * (1.0 + GAP) - GAP) / 2.0,
+            -(size.y as f32 * (1.0 + GAP) - GAP) / 2.0,
+        );
+        for x in 0..size.x {
+            for y in 0..size.y {
+                offsets.push(base.x + x as f32 * (1.0 + GAP));
+                offsets.push(base.y + y as f32 * (1.0 + GAP));
+            }
+        }
+        self.set_offsets(&gl, &offsets[..]);
+    }
+
+    pub fn set_scale(&mut self, gl: &glow::Context, ratio: f32, size: &V2<u32>) {
+        let scale = if ratio > 1.0 {
+            V2::new(1.0 / ratio, 1.0)
+        } else {
+            V2::new(1.0, ratio)
+        };
+        unsafe {
+            gl.use_program(Some(self.program));
+            let loc = gl.get_uniform_location(self.program, "scale");
+            gl.uniform_2_f32(
+                loc.as_ref(),
+                scale.x * 2.0 * (1.0 - MARGIN) / (size.x as f32 * (1.0 + GAP) - GAP),
+                scale.y * 2.0 * (1.0 - MARGIN) / (size.y as f32 * (1.0 + GAP) - GAP),
             );
         }
     }

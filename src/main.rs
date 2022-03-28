@@ -1,10 +1,12 @@
 mod tile;
+mod v2;
 
 use glow::HasContext;
 use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use std::time::{Duration, Instant};
 use tile::Tile;
+use v2::V2;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -20,9 +22,12 @@ fn main() {
     let gl =
         unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
 
-    let mut tile = Tile::new(&gl);
-    tile.set_offsets(&gl, &[-1.3, -1.3, 0.2, 0.5]);
-    let mut tile = Some(tile);
+    let size = V2::new(4, 4);
+    let mut tile = {
+        let mut tile = Tile::new(&gl);
+        tile.setup_grid(&gl, &size);
+        Some(tile)
+    };
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
@@ -42,6 +47,10 @@ fn main() {
                     WindowEvent::Resized(sz) => {
                         win.resize(*sz);
                         unsafe { gl.viewport(0, 0, sz.width as i32, sz.height as i32) };
+
+                        if let Some(tile) = &mut tile {
+                            tile.set_scale(&gl, sz.width as f32 / sz.height as f32, &size);
+                        }
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
