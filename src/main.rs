@@ -1,3 +1,4 @@
+mod glyphs;
 mod tile;
 mod v2;
 
@@ -28,7 +29,6 @@ fn main() {
         tile.setup_grid(&gl, &size);
         Some(tile)
     };
-
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {

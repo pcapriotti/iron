@@ -1,7 +1,10 @@
 #version 330 core
 
+in vec2 uv;
 out vec4 col;
+uniform sampler2D t;
 
 void main() {
-    col = vec4(0.9, 0.8, 0.8, 1.0);
+  float val = texture(t, uv).r;
+  col = vec4(val, val, val, 1.0);
 }

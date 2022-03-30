@@ -1,3 +1,4 @@
+use crate::glyphs::Glyphs;
 use crate::v2::V2;
 use glow::HasContext;
 
@@ -9,6 +10,8 @@ pub struct Tile {
     offsets: glow::NativeBuffer,
     vao: glow::NativeVertexArray,
     program: glow::NativeProgram,
+    texture: glow::NativeTexture,
+    glyphs: Glyphs,
     num_instances: u32,
 }
 
@@ -114,11 +117,61 @@ impl Tile {
             gl.delete_shader(frag);
             program
         };
+
+        let mut glyphs = Glyphs::new().unwrap();
+
+        let texture = unsafe {
+            let texture = gl.create_texture().unwrap();
+
+            {
+                gl.use_program(Some(program));
+                let loc = gl.get_uniform_location(program, "t");
+                gl.uniform_1_i32(loc.as_ref(), 0);
+                gl.use_program(None);
+            }
+
+            gl.bind_texture(glow::TEXTURE_2D, Some(texture));
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::REPEAT as i32);
+            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::REPEAT as i32);
+            gl.tex_parameter_i32(
+                glow::TEXTURE_2D,
+                glow::TEXTURE_MAG_FILTER,
+                glow::LINEAR as i32,
+            );
+            gl.tex_parameter_i32(
+                glow::TEXTURE_2D,
+                glow::TEXTURE_MIN_FILTER,
+                glow::LINEAR as i32,
+            );
+
+            let width = 256;
+            let height = 256;
+
+            gl.tex_image_2d(
+                glow::TEXTURE_2D,
+                0,
+                glow::RGBA as i32,
+                width,
+                height,
+                0,
+                glow::RED,
+                glow::UNSIGNED_BYTE,
+                Some(&vec![0xff; (width * height) as usize]),
+            );
+            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
+            glyphs.upload_atlas(gl).unwrap();
+            gl.bind_texture(glow::TEXTURE_2D, None);
+
+            texture
+        };
+
         Self {
             vbo,
             offsets,
             vao,
             program,
+            texture,
+            glyphs,
             num_instances: 1,
         }
     }
@@ -135,6 +188,7 @@ impl Tile {
         unsafe {
             gl.use_program(Some(self.program));
             gl.bind_vertex_array(Some(self.vao));
+            gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
             gl.draw_elements_instanced(
                 glow::TRIANGLES,
                 6,
