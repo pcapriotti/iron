@@ -8,6 +8,8 @@ const MARGIN: f32 = 0.08;
 pub struct Tile {
     vbo: glow::NativeBuffer,
     offsets: glow::NativeBuffer,
+    uv_rects: glow::NativeBuffer,
+    rects: glow::NativeBuffer,
     vao: glow::NativeVertexArray,
     program: glow::NativeProgram,
     texture: glow::NativeTexture,
@@ -17,12 +19,12 @@ pub struct Tile {
 
 impl Tile {
     pub fn new(gl: &glow::Context) -> Self {
-        let (vbo, offsets, vao) = unsafe {
-            let vertices: [f32; 20] = [
-                0.0, 0.0, 0.0, 0.0, 1.0, // bottom left
-                1.0, 0.0, 0.0, 1.0, 1.0, // bottom right
-                0.0, 1.0, 0.0, 0.0, 0.0, // top left
-                1.0, 1.0, 0.0, 1.0, 0.0, // top right
+        let (vbo, offsets, uv_rects, rects, vao) = unsafe {
+            let vertices: [f32; 16] = [
+                0.0, 0.0, 0.0, 1.0, // bottom left
+                1.0, 0.0, 1.0, 1.0, // bottom right
+                0.0, 1.0, 0.0, 0.0, // top left
+                1.0, 1.0, 1.0, 0.0, // top right
             ];
             let indices: [u32; 6] = [
                 0, 1, 2, // bottom left
@@ -47,7 +49,7 @@ impl Tile {
                 3,
                 glow::FLOAT,
                 false,
-                (std::mem::size_of::<f32>() * 5) as i32,
+                (std::mem::size_of::<f32>() * 4) as i32,
                 0,
             );
             gl.enable_vertex_attrib_array(0);
@@ -58,8 +60,8 @@ impl Tile {
                 2,
                 glow::FLOAT,
                 false,
-                (std::mem::size_of::<f32>() * 5) as i32,
-                (std::mem::size_of::<f32>() * 3) as i32,
+                (std::mem::size_of::<f32>() * 4) as i32,
+                (std::mem::size_of::<f32>() * 2) as i32,
             );
             gl.enable_vertex_attrib_array(1);
 
@@ -76,6 +78,32 @@ impl Tile {
             gl.vertex_attrib_divisor(2, 1);
             gl.enable_vertex_attrib_array(2);
 
+            // uv rects
+            let uv_rects_array: [f32; 4] = [0.0, 0.0, 0.5, 0.5];
+            let uv_rects = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(uv_rects));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&uv_rects_array[..]),
+                glow::DYNAMIC_DRAW,
+            );
+            gl.vertex_attrib_pointer_f32(3, 4, glow::FLOAT, false, 0, 0);
+            gl.vertex_attrib_divisor(3, 1);
+            gl.enable_vertex_attrib_array(3);
+
+            // rects
+            let rects_array: [i32; 4] = [0, 0, 10, 10];
+            let rects = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(rects));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&rects_array[..]),
+                glow::DYNAMIC_DRAW,
+            );
+            gl.vertex_attrib_pointer_f32(4, 4, glow::INT, false, 0, 0);
+            gl.vertex_attrib_divisor(4, 1);
+            gl.enable_vertex_attrib_array(4);
+
             gl.bind_buffer(glow::ARRAY_BUFFER, None);
 
             gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(ebo));
@@ -86,7 +114,7 @@ impl Tile {
             );
 
             gl.bind_vertex_array(None);
-            (vbo, offsets, vao)
+            (vbo, offsets, uv_rects, rects, vao)
         };
 
         let program = unsafe {
@@ -144,8 +172,8 @@ impl Tile {
                 glow::LINEAR as i32,
             );
 
-            let width = 256;
-            let height = 256;
+            let width = 1024;
+            let height = 1024;
 
             gl.tex_image_2d(
                 glow::TEXTURE_2D,
@@ -168,6 +196,8 @@ impl Tile {
         Self {
             vbo,
             offsets,
+            uv_rects,
+            rects,
             vao,
             program,
             texture,
@@ -200,9 +230,49 @@ impl Tile {
         }
     }
 
-    fn set_offsets(&mut self, gl: &glow::Context, offsets: &[f32]) {
-        let count = offsets.len() / 2;
+    pub fn setup_grid(&mut self, gl: &glow::Context, size: &V2<u32>) {
+        let count = size.x * size.y;
         self.num_instances = count as u32;
+
+        let mut offsets: Vec<f32> = Vec::new();
+        let mut uv_rects: Vec<f32> = Vec::new();
+        let mut rects: Vec<i32> = Vec::new();
+        let mut c = 'a';
+
+        for x in 0..size.x {
+            for y in 0..size.y {
+                offsets.push(0.2 * x as f32);
+                offsets.push(0.2 * y as f32);
+
+                if let Some((uv_rect, rect)) = self.glyphs.rect_for(c).unwrap() {
+                    uv_rects.push(uv_rect.min.x);
+                    uv_rects.push(uv_rect.min.y);
+                    uv_rects.push(uv_rect.width());
+                    uv_rects.push(uv_rect.height());
+
+                    println!(
+                        "{}: ({}, {}) {} × {}",
+                        c,
+                        rect.min.x,
+                        rect.min.y,
+                        rect.width(),
+                        rect.height()
+                    );
+                    rects.push(rect.min.x);
+                    rects.push(rect.min.y);
+                    rects.push(rect.width());
+                    rects.push(rect.height());
+                } else {
+                    uv_rects.push(0.0);
+                    uv_rects.push(0.0);
+                    uv_rects.push(0.0);
+                    uv_rects.push(0.0);
+                }
+
+                c = (c as u8 + 1) as char;
+            }
+        }
+
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.offsets));
             gl.buffer_data_u8_slice(
@@ -210,38 +280,43 @@ impl Tile {
                 bytemuck::cast_slice(&offsets[..]),
                 glow::STATIC_DRAW,
             );
+
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.uv_rects));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&uv_rects[..]),
+                glow::DYNAMIC_DRAW,
+            );
+
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.rects));
+            gl.buffer_data_u8_slice(
+                glow::ARRAY_BUFFER,
+                bytemuck::cast_slice(&rects[..]),
+                glow::DYNAMIC_DRAW,
+            );
         }
     }
 
-    pub fn setup_grid(&mut self, gl: &glow::Context, size: &V2<u32>) {
-        let mut offsets = Vec::new();
-        let base = V2::new(
-            -(size.x as f32 * (1.0 + GAP) - GAP) / 2.0,
-            -(size.y as f32 * (1.0 + GAP) - GAP) / 2.0,
-        );
-        for x in 0..size.x {
-            for y in 0..size.y {
-                offsets.push(base.x + x as f32 * (1.0 + GAP));
-                offsets.push(base.y + y as f32 * (1.0 + GAP));
-            }
-        }
-        self.set_offsets(&gl, &offsets[..]);
-    }
-
-    pub fn set_scale(&mut self, gl: &glow::Context, ratio: f32, size: &V2<u32>) {
+    pub fn set_scale(&mut self, gl: &glow::Context, width: u32, height: u32, size: &V2<u32>) {
+        let ratio = width as f32 / height as f32;
         let scale = if ratio > 1.0 {
             V2::new(1.0 / ratio, 1.0)
         } else {
             V2::new(1.0, ratio)
         };
+
+        unsafe { gl.use_program(Some(self.program)) };
         unsafe {
-            gl.use_program(Some(self.program));
             let loc = gl.get_uniform_location(self.program, "scale");
             gl.uniform_2_f32(
                 loc.as_ref(),
                 scale.x * 2.0 * (1.0 - MARGIN) / (size.x as f32 * (1.0 + GAP) - GAP),
                 scale.y * 2.0 * (1.0 - MARGIN) / (size.y as f32 * (1.0 + GAP) - GAP),
             );
+        }
+        unsafe {
+            let loc = gl.get_uniform_location(self.program, "resolution");
+            gl.uniform_2_u32(loc.as_ref(), width, height);
         }
     }
 }

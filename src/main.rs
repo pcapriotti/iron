@@ -23,7 +23,7 @@ fn main() {
     let gl =
         unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
 
-    let size = V2::new(4, 4);
+    let size = V2::new(5, 5);
     let mut tile = {
         let mut tile = Tile::new(&gl);
         tile.setup_grid(&gl, &size);
@@ -49,7 +49,7 @@ fn main() {
                         unsafe { gl.viewport(0, 0, sz.width as i32, sz.height as i32) };
 
                         if let Some(tile) = &mut tile {
-                            tile.set_scale(&gl, sz.width as f32 / sz.height as f32, &size);
+                            tile.set_scale(&gl, sz.width, sz.height, &size);
                         }
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
