@@ -20,8 +20,14 @@ fn main() {
         .build_windowed(wb, &eloop)
         .unwrap();
     let win = unsafe { wctx.make_current().unwrap() };
-    let gl =
-        unsafe { glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _) };
+    let gl = unsafe {
+        let ctx = glow::Context::from_loader_function(|s| {
+            win.get_proc_address(s) as *const _
+        });
+        ctx.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
+        ctx.enable(glow::BLEND);
+        ctx
+    };
 
     let size = V2::new(5, 5);
     let mut tile = {
@@ -30,7 +36,8 @@ fn main() {
         Some(tile)
     };
     eloop.run(move |e, _target, cf| {
-        *cf = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
+        *cf =
+            ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {
             Event::LoopDestroyed => {
                 let tile = tile.take().unwrap();
@@ -46,10 +53,13 @@ fn main() {
                 match e {
                     WindowEvent::Resized(sz) => {
                         win.resize(*sz);
-                        unsafe { gl.viewport(0, 0, sz.width as i32, sz.height as i32) };
+                        unsafe {
+                            gl.viewport(0, 0, sz.width as i32, sz.height as i32)
+                        };
 
                         if let Some(tile) = &mut tile {
-                            tile.set_scale(&gl, sz.width, sz.height, &size);
+                            // tile.set_scale(&gl, sz.width, sz.height, &size);
+                            tile.resize(&gl, sz.width, sz.height);
                         }
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
@@ -70,7 +80,7 @@ fn main() {
 
 fn draw_window(gl: &glow::Context, tile: &Tile) {
     unsafe {
-        gl.clear_color(0.46, 0.7, 0.76, 1.0);
+        gl.clear_color(0.148, 0.148, 0.148, 1.0);
         gl.clear(glow::COLOR_BUFFER_BIT);
     }
 

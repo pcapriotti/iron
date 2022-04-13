@@ -6,5 +6,5 @@ uniform sampler2D t;
 
 void main() {
   float val = texture(t, uv).r;
-  col = vec4(val, val, val, 1.0);
+  col = vec4(0.9, 0.9, 0.9, val);
 }

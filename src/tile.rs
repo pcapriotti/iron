@@ -7,9 +7,8 @@ const MARGIN: f32 = 0.08;
 
 pub struct Tile {
     vbo: glow::NativeBuffer,
-    offsets: glow::NativeBuffer,
-    uv_rects: glow::NativeBuffer,
-    rects: glow::NativeBuffer,
+    cell_rects: glow::NativeBuffer,
+    glyph_indices: glow::NativeBuffer,
     vao: glow::NativeVertexArray,
     program: glow::NativeProgram,
     texture: glow::NativeTexture,
@@ -19,7 +18,7 @@ pub struct Tile {
 
 impl Tile {
     pub fn new(gl: &glow::Context) -> Self {
-        let (vbo, offsets, uv_rects, rects, vao) = unsafe {
+        let (vbo, cell_rects, glyph_indices, vao) = unsafe {
             let vertices: [f32; 16] = [
                 0.0, 0.0, 0.0, 1.0, // bottom left
                 1.0, 0.0, 1.0, 1.0, // bottom right
@@ -65,44 +64,31 @@ impl Tile {
             );
             gl.enable_vertex_attrib_array(1);
 
-            // offsets
-            let offsets_array: [f32; 2] = [0.0, 0.0];
-            let offsets = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(offsets));
+            // cell rects
+            let cell_rect_array: [i32; 4] = [0, 0, 0, 0];
+            let cell_rects = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(cell_rects));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&offsets_array[..]),
+                bytemuck::cast_slice(&cell_rect_array[..]),
                 glow::STATIC_DRAW,
             );
-            gl.vertex_attrib_pointer_f32(2, 2, glow::FLOAT, false, 0, 0);
+            gl.vertex_attrib_pointer_i32(2, 4, glow::INT, 0, 0);
             gl.vertex_attrib_divisor(2, 1);
             gl.enable_vertex_attrib_array(2);
 
-            // uv rects
-            let uv_rects_array: [f32; 4] = [0.0, 0.0, 0.5, 0.5];
-            let uv_rects = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(uv_rects));
+            // glyph indices
+            let glyph_index_array: [i32; 1] = [0];
+            let glyph_indices = gl.create_buffer().unwrap();
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(glyph_indices));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&uv_rects_array[..]),
-                glow::DYNAMIC_DRAW,
+                bytemuck::cast_slice(&glyph_index_array[..]),
+                glow::STATIC_DRAW,
             );
-            gl.vertex_attrib_pointer_f32(3, 4, glow::FLOAT, false, 0, 0);
+            gl.vertex_attrib_pointer_i32(3, 1, glow::INT, 0, 0);
             gl.vertex_attrib_divisor(3, 1);
             gl.enable_vertex_attrib_array(3);
-
-            // rects
-            let rects_array: [i32; 4] = [0, 0, 10, 10];
-            let rects = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(rects));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&rects_array[..]),
-                glow::DYNAMIC_DRAW,
-            );
-            gl.vertex_attrib_pointer_f32(4, 4, glow::INT, false, 0, 0);
-            gl.vertex_attrib_divisor(4, 1);
-            gl.enable_vertex_attrib_array(4);
 
             gl.bind_buffer(glow::ARRAY_BUFFER, None);
 
@@ -114,7 +100,7 @@ impl Tile {
             );
 
             gl.bind_vertex_array(None);
-            (vbo, offsets, uv_rects, rects, vao)
+            (vbo, cell_rects, glyph_indices, vao)
         };
 
         let program = unsafe {
@@ -148,56 +134,16 @@ impl Tile {
 
         let mut glyphs = Glyphs::new().unwrap();
 
-        let texture = unsafe {
-            let texture = gl.create_texture().unwrap();
+        let (texture, buffer) = glyphs.make_atlas(gl).unwrap();
 
-            {
-                gl.use_program(Some(program));
-                let loc = gl.get_uniform_location(program, "t");
-                gl.uniform_1_i32(loc.as_ref(), 0);
-                gl.use_program(None);
-            }
-
-            gl.bind_texture(glow::TEXTURE_2D, Some(texture));
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::REPEAT as i32);
-            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::REPEAT as i32);
-            gl.tex_parameter_i32(
-                glow::TEXTURE_2D,
-                glow::TEXTURE_MAG_FILTER,
-                glow::LINEAR as i32,
-            );
-            gl.tex_parameter_i32(
-                glow::TEXTURE_2D,
-                glow::TEXTURE_MIN_FILTER,
-                glow::LINEAR as i32,
-            );
-
-            let width = 1024;
-            let height = 1024;
-
-            gl.tex_image_2d(
-                glow::TEXTURE_2D,
-                0,
-                glow::RGBA as i32,
-                width,
-                height,
-                0,
-                glow::RED,
-                glow::UNSIGNED_BYTE,
-                Some(&vec![0xff; (width * height) as usize]),
-            );
-            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
-            glyphs.upload_atlas(gl).unwrap();
-            gl.bind_texture(glow::TEXTURE_2D, None);
-
-            texture
-        };
+        unsafe {
+            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, Some(buffer));
+        }
 
         Self {
             vbo,
-            offsets,
-            uv_rects,
-            rects,
+            cell_rects,
+            glyph_indices,
             vao,
             program,
             texture,
@@ -230,93 +176,44 @@ impl Tile {
         }
     }
 
-    pub fn setup_grid(&mut self, gl: &glow::Context, size: &V2<u32>) {
-        let count = size.x * size.y;
-        self.num_instances = count as u32;
+    pub fn setup_grid(&mut self, gl: &glow::Context, _size: &V2<u32>) {
+        // let count = size.x * size.y;
+        // self.num_instances = count as u32;
+        self.num_instances = 15;
 
-        let mut offsets: Vec<f32> = Vec::new();
-        let mut uv_rects: Vec<f32> = Vec::new();
-        let mut rects: Vec<i32> = Vec::new();
-        let mut c = 'a';
+        let mut cell_rects: Vec<i32> = Vec::new();
+        let mut glyph_indices: Vec<i32> = Vec::new();
 
-        for x in 0..size.x {
-            for y in 0..size.y {
-                offsets.push(0.2 * x as f32);
-                offsets.push(0.2 * y as f32);
-
-                if let Some((uv_rect, rect)) = self.glyphs.rect_for(c).unwrap() {
-                    uv_rects.push(uv_rect.min.x);
-                    uv_rects.push(uv_rect.min.y);
-                    uv_rects.push(uv_rect.width());
-                    uv_rects.push(uv_rect.height());
-
-                    println!(
-                        "{}: ({}, {}) {} × {}",
-                        c,
-                        rect.min.x,
-                        rect.min.y,
-                        rect.width(),
-                        rect.height()
-                    );
-                    rects.push(rect.min.x);
-                    rects.push(rect.min.y);
-                    rects.push(rect.width());
-                    rects.push(rect.height());
-                } else {
-                    uv_rects.push(0.0);
-                    uv_rects.push(0.0);
-                    uv_rects.push(0.0);
-                    uv_rects.push(0.0);
-                }
-
-                c = (c as u8 + 1) as char;
-            }
+        for i in 0..self.num_instances as i32 {
+            cell_rects.extend_from_slice(&[10 + i * 90, 400, 90, 250]);
+            glyph_indices.push(i + 60);
         }
 
         unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.offsets));
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.cell_rects));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&offsets[..]),
-                glow::STATIC_DRAW,
+                bytemuck::cast_slice(&cell_rects[..]),
+                glow::DYNAMIC_DRAW,
             );
-
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.uv_rects));
+            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.glyph_indices));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&uv_rects[..]),
+                bytemuck::cast_slice(&glyph_indices[..]),
                 glow::DYNAMIC_DRAW,
             );
 
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.rects));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&rects[..]),
-                glow::DYNAMIC_DRAW,
-            );
+            gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
+            self.glyphs.upload_atlas(&gl);
+            gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }
 
-    pub fn set_scale(&mut self, gl: &glow::Context, width: u32, height: u32, size: &V2<u32>) {
-        let ratio = width as f32 / height as f32;
-        let scale = if ratio > 1.0 {
-            V2::new(1.0 / ratio, 1.0)
-        } else {
-            V2::new(1.0, ratio)
-        };
-
-        unsafe { gl.use_program(Some(self.program)) };
+    pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
         unsafe {
-            let loc = gl.get_uniform_location(self.program, "scale");
-            gl.uniform_2_f32(
-                loc.as_ref(),
-                scale.x * 2.0 * (1.0 - MARGIN) / (size.x as f32 * (1.0 + GAP) - GAP),
-                scale.y * 2.0 * (1.0 - MARGIN) / (size.y as f32 * (1.0 + GAP) - GAP),
-            );
-        }
-        unsafe {
-            let loc = gl.get_uniform_location(self.program, "resolution");
-            gl.uniform_2_u32(loc.as_ref(), width, height);
+            gl.use_program(Some(self.program));
+            let loc = gl.get_uniform_location(self.program, "viewport");
+            gl.uniform_4_i32(loc.as_ref(), 0, 0, width as i32, height as i32);
         }
     }
 }
