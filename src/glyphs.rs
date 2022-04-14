@@ -5,6 +5,7 @@ use rusttype::{point, Font, PositionedGlyph, Rect, Scale};
 
 const MAIN_FONT_ID: usize = 0;
 
+/// A cache of glyphs to be passed to the GPU.
 pub struct Glyphs {
     font: Font<'static>,
     cache: Cache<'static>,
@@ -13,6 +14,7 @@ pub struct Glyphs {
 
 /// Per-glyph information sent to the GPU
 pub struct GlyphInfo<'a> {
+    #[allow(dead_code)]
     glyph: PositionedGlyph<'a>,
     coords: TextureCoords,
 }
@@ -21,7 +23,20 @@ pub struct GlyphInfo<'a> {
 ///
 /// The buffer contains information for each glyph in the texture. The elements of the buffer are
 /// ordered by character.
-pub struct Atlas {}
+pub struct Atlas {
+    texture: glow::NativeTexture,
+    buffer: glow::NativeBuffer,
+}
+
+impl Atlas {
+    pub fn texture(&self) -> glow::NativeTexture {
+        self.texture
+    }
+
+    pub fn buffer(&self) -> glow::NativeBuffer {
+        self.buffer
+    }
+}
 
 impl<'a> GlyphInfo<'a> {
     pub fn write_to(&self, out: &mut Vec<u8>) {
@@ -85,10 +100,7 @@ impl Glyphs {
         Ok(())
     }
 
-    pub fn make_atlas(
-        &mut self,
-        gl: &glow::Context,
-    ) -> Result<(glow::NativeTexture, glow::NativeBuffer)> {
+    pub fn make_atlas(&mut self, gl: &glow::Context) -> Result<Atlas> {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -170,16 +182,9 @@ impl Glyphs {
             ssbo
         };
 
-        Ok((tex, ssbo))
-    }
-
-    pub fn rect_for(&self, c: char) -> Result<Option<TextureCoords>> {
-        let glyph = self
-            .font
-            .glyph(c)
-            .scaled(self.scale)
-            .positioned(point(0.0, 0.0));
-        let result = self.cache.rect_for(MAIN_FONT_ID, &glyph)?;
-        Ok(result)
+        Ok(Atlas {
+            texture: tex,
+            buffer: ssbo,
+        })
     }
 }

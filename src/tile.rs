@@ -2,9 +2,6 @@ use crate::glyphs::Glyphs;
 use crate::v2::V2;
 use glow::HasContext;
 
-const GAP: f32 = 0.1;
-const MARGIN: f32 = 0.08;
-
 pub struct Tile {
     vbo: glow::NativeBuffer,
     cell_rects: glow::NativeBuffer,
@@ -134,10 +131,14 @@ impl Tile {
 
         let mut glyphs = Glyphs::new().unwrap();
 
-        let (texture, buffer) = glyphs.make_atlas(gl).unwrap();
+        let atlas = glyphs.make_atlas(gl).unwrap();
 
         unsafe {
-            gl.bind_buffer_base(glow::SHADER_STORAGE_BUFFER, 0, Some(buffer));
+            gl.bind_buffer_base(
+                glow::SHADER_STORAGE_BUFFER,
+                0,
+                Some(atlas.buffer()),
+            );
         }
 
         Self {
@@ -146,7 +147,7 @@ impl Tile {
             glyph_indices,
             vao,
             program,
-            texture,
+            texture: atlas.texture(),
             glyphs,
             num_instances: 1,
         }
@@ -185,7 +186,7 @@ impl Tile {
         let mut glyph_indices: Vec<i32> = Vec::new();
 
         for i in 0..self.num_instances as i32 {
-            cell_rects.extend_from_slice(&[10 + i * 90, 400, 90, 250]);
+            cell_rects.extend_from_slice(&[10 + i * 90, 30, 90, 150]);
             glyph_indices.push(i + 60);
         }
 
@@ -204,7 +205,7 @@ impl Tile {
             );
 
             gl.bind_texture(glow::TEXTURE_2D, Some(self.texture));
-            self.glyphs.upload_atlas(&gl);
+            self.glyphs.upload_atlas(&gl).unwrap();
             gl.bind_texture(glow::TEXTURE_2D, None);
         }
     }

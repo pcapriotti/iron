@@ -22,7 +22,6 @@ void main() {
   glyph_info_t info = atlas.info[glyph];
   uv = info.uv_rect.xy + info.uv_rect.zw * uv0;
 
-  /* vec2 pos = (cell_rect.xy + info.rect.xy); */
   vec2 pos = vec2(cell_rect.x + info.rect.x,
     cell_rect.y + cell_rect.w - info.rect.y - info.rect.w);
   pos += info.rect.zw * p;
