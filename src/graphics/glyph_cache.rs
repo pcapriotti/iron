@@ -37,6 +37,7 @@ pub struct GlyphCache {
     font: Font<'static>,
     cache: Cache<'static>,
     scale: Scale,
+    buffer: ShaderStorageBuffer,
 }
 
 impl GlyphCache {
@@ -44,7 +45,7 @@ impl GlyphCache {
     const HEIGHT: u32 = 1024;
     const SCALE: f32 = 200.0;
 
-    pub fn new() -> Self {
+    pub fn new(gl: &glow::Context, index: u32) -> Self {
         let data = std::fs::read("/usr/share/fonts/TTF/Hack-Regular.ttf")
             .expect("Could not read font");
         let font: Font<'static> =
@@ -65,7 +66,16 @@ impl GlyphCache {
                 .positioned(point(0.0, 0.0));
             cache.queue_glyph(MAIN_FONT_ID, glyph);
         }
-        Self { font, cache, scale }
+
+        let buffer = ShaderStorageBuffer::new(gl);
+        buffer.bind(gl, index);
+
+        Self {
+            font,
+            cache,
+            scale,
+            buffer,
+        }
     }
 
     pub fn upload_atlas(
@@ -90,7 +100,7 @@ impl GlyphCache {
             .unwrap();
     }
 
-    pub fn make_atlas(&mut self, gl: &glow::Context, index: u32) -> Texture {
+    pub fn make_atlas(&mut self, gl: &glow::Context) -> Texture {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -154,15 +164,17 @@ impl GlyphCache {
         };
 
         {
-            let mut ssbo = ShaderStorageBuffer::new(gl);
             let mut data = Vec::new();
             for info in infos {
                 info.write_to(&mut data);
             }
-            ssbo.set_data(gl, &data);
-            ssbo.bind(gl, index);
+            self.buffer.set_data(gl, &data);
         }
 
         tex
+    }
+
+    pub fn cleanup(&mut self, gl: &glow::Context) {
+        self.buffer.cleanup(gl);
     }
 }

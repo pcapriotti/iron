@@ -10,7 +10,7 @@ pub struct Glyphs {
 
     cell_rects: VertexBuffer,
     glyph_indices: VertexBuffer,
-    glyphs: GlyphCache,
+    cache: GlyphCache,
     num_instances: u32,
     width: u32,
     height: u32,
@@ -55,9 +55,8 @@ impl Glyphs {
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
-        let mut glyphs = GlyphCache::new();
-
-        let texture = glyphs.make_atlas(gl, 0);
+        let mut cache = GlyphCache::new(gl, 0);
+        let texture = cache.make_atlas(gl);
 
         let obj = Object::new(vao, ebo, texture, program);
 
@@ -65,7 +64,7 @@ impl Glyphs {
             obj,
             cell_rects,
             glyph_indices,
-            glyphs,
+            cache,
             num_instances: 1,
             width: 0,
             height: 0,
@@ -74,6 +73,7 @@ impl Glyphs {
 
     pub fn cleanup(&mut self, gl: &glow::Context) {
         self.obj.cleanup(gl);
+        self.cache.cleanup(gl);
     }
 
     pub unsafe fn render(&self, gl: &glow::Context) {
@@ -125,7 +125,7 @@ impl Glyphs {
         self.glyph_indices
             .set_data(gl, &glyph_indices[..], glow::DYNAMIC_DRAW);
 
-        self.glyphs.upload_atlas(gl, &self.obj.texture.bind(gl));
+        self.cache.upload_atlas(gl, &self.obj.texture.bind(gl));
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
