@@ -1,5 +1,6 @@
 use glow::HasContext;
 
+#[derive(Clone)]
 pub struct Texture {
     inner: glow::NativeTexture,
 }

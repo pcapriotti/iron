@@ -1,8 +1,8 @@
 use crate::game::Game;
 use crate::graphics::util::rect;
 use crate::graphics::{
-    ElementBuffer, GlyphCache, Instancing::*, Object, Program, VertexArray,
-    VertexBuffer,
+    ElementBuffer, GlyphCache, Instancing::*, Object, Program, Texture,
+    VertexArray, VertexBuffer,
 };
 
 pub struct Glyphs {
@@ -10,6 +10,8 @@ pub struct Glyphs {
 
     cell_rects: VertexBuffer,
     glyph_indices: VertexBuffer,
+    texture: Texture,
+
     cache: GlyphCache,
     num_instances: u32,
     width: u32,
@@ -58,12 +60,13 @@ impl Glyphs {
         let mut cache = GlyphCache::new(gl, 0);
         let texture = cache.make_atlas(gl);
 
-        let obj = Object::new(vao, ebo, texture, program);
+        let obj = Object::new(vao, ebo, Some(texture.clone()), program);
 
         Self {
             obj,
             cell_rects,
             glyph_indices,
+            texture,
             cache,
             num_instances: 1,
             width: 0,
@@ -125,7 +128,7 @@ impl Glyphs {
         self.glyph_indices
             .set_data(gl, &glyph_indices[..], glow::DYNAMIC_DRAW);
 
-        self.cache.upload_atlas(gl, &self.obj.texture.bind(gl));
+        self.cache.upload_atlas(gl, &self.texture.bind(gl));
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {

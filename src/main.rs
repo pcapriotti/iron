@@ -1,6 +1,7 @@
 mod game;
 mod glyphs;
 mod graphics;
+mod tiles;
 
 use game::Game;
 use glow::HasContext;
