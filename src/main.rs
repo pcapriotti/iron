@@ -1,13 +1,13 @@
 mod game;
+mod glyphs;
 mod graphics;
-mod tile;
 
 use game::Game;
 use glow::HasContext;
 use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
+use glyphs::Glyphs;
 use std::time::{Duration, Instant};
-use tile::Tile;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -30,22 +30,22 @@ fn main() {
     };
 
     let game = Game::new(4, 4);
-    let mut tile = {
-        let mut tile = Tile::new(&gl);
-        tile.setup_grid(&gl, &game);
-        Some(tile)
+    let mut glyphs = {
+        let mut g = Glyphs::new(&gl);
+        g.setup_grid(&gl, &game);
+        Some(g)
     };
     eloop.run(move |e, _target, cf| {
         *cf =
             ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {
             Event::LoopDestroyed => {
-                let mut tile = tile.take().unwrap();
-                tile.cleanup(&gl);
+                let mut glyphs = glyphs.take().unwrap();
+                glyphs.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
-                let tile = tile.as_mut().unwrap();
-                draw_window(&gl, &tile);
+                let glyphs = glyphs.as_mut().unwrap();
+                draw_window(&gl, &glyphs);
                 win.swap_buffers().unwrap();
             }
             Event::WindowEvent { event: ref e, .. } => {
@@ -57,10 +57,9 @@ fn main() {
                             gl.viewport(0, 0, sz.width as i32, sz.height as i32)
                         };
 
-                        if let Some(tile) = &mut tile {
-                            // tile.set_scale(&gl, sz.width, sz.height, &size);
-                            tile.resize(&gl, sz.width, sz.height);
-                            tile.setup_grid(&gl, &game);
+                        if let Some(glyphs) = &mut glyphs {
+                            glyphs.resize(&gl, sz.width, sz.height);
+                            glyphs.setup_grid(&gl, &game);
                         }
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
@@ -79,11 +78,10 @@ fn main() {
     });
 }
 
-fn draw_window(gl: &glow::Context, tile: &Tile) {
+fn draw_window(gl: &glow::Context, glyphs: &Glyphs) {
     unsafe {
         gl.clear_color(0.148, 0.148, 0.148, 1.0);
         gl.clear(glow::COLOR_BUFFER_BIT);
+        glyphs.render(&gl);
     }
-
-    tile.render(&gl);
 }

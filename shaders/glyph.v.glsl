@@ -13,8 +13,6 @@ layout(std430, binding = 0) buffer atlas_t {
 } atlas;
 
 uniform ivec4 viewport;
-uniform vec2 scale;
-uniform uvec2 resolution;
 out vec2 uv;
 flat out vec4 uv_rect;
 

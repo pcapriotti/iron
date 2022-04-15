@@ -5,7 +5,7 @@ use crate::graphics::{
     VertexBuffer,
 };
 
-pub struct Tile {
+pub struct Glyphs {
     obj: Object,
 
     cell_rects: VertexBuffer,
@@ -16,7 +16,7 @@ pub struct Tile {
     height: u32,
 }
 
-impl Tile {
+impl Glyphs {
     const GAP: f32 = 0.03;
 
     pub fn new(gl: &glow::Context) -> Self {
@@ -51,8 +51,8 @@ impl Tile {
 
         let program = Program::new(
             gl,
-            include_bytes!("../shaders/tile.v.glsl"),
-            include_bytes!("../shaders/tile.f.glsl"),
+            include_bytes!("../shaders/glyph.v.glsl"),
+            include_bytes!("../shaders/glyph.f.glsl"),
         );
 
         let mut glyphs = GlyphCache::new();
@@ -76,10 +76,8 @@ impl Tile {
         self.obj.cleanup(gl);
     }
 
-    pub fn render(&self, gl: &glow::Context) {
-        unsafe {
-            self.obj.render(gl, self.num_instances);
-        }
+    pub unsafe fn render(&self, gl: &glow::Context) {
+        self.obj.render(gl, self.num_instances);
     }
 
     pub fn setup_grid(&mut self, gl: &glow::Context, game: &Game) {
@@ -87,8 +85,6 @@ impl Tile {
             return;
         }
 
-        // let count = size.x * size.y;
-        // self.num_instances = count as u32;
         self.num_instances = (game.width() * game.height()) as u32;
 
         let mut cell_rects: Vec<i32> = Vec::new();
