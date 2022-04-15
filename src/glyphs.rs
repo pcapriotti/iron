@@ -1,7 +1,7 @@
 use crate::game::Game;
 use crate::graphics::util::rect;
 use crate::graphics::{
-    ElementBuffer, GlyphCache, Instancing::*, Object, Program, Texture,
+    ElementBuffer, GlyphCache, Instancing::*, Object, Program, Quad, Texture,
     VertexArray, VertexBuffer,
 };
 
@@ -22,20 +22,11 @@ impl Glyphs {
     const GAP: f32 = 0.03;
 
     pub fn new(gl: &glow::Context) -> Self {
-        let vertices: [f32; 8] = [
-            0.0, 0.0, // bottom left
-            1.0, 0.0, // bottom right
-            0.0, 1.0, // top left
-            1.0, 1.0, // top right
-        ];
-        let indices: [u32; 6] = [
-            0, 1, 2, // bottom left
-            2, 1, 3, // top right
-        ];
-
-        // vertices
-        let mut vbo = VertexBuffer::new(gl, 2, glow::FLOAT, ByVertex);
-        vbo.set_data(gl, &vertices[..], glow::STATIC_DRAW);
+        let mut quad = Quad::new(
+            gl,
+            include_bytes!("../shaders/glyph.v.glsl"),
+            include_bytes!("../shaders/glyph.f.glsl"),
+        );
 
         // cell rects
         let cell_rects = VertexBuffer::new(gl, 4, glow::INT, ByInstance);
@@ -43,24 +34,13 @@ impl Glyphs {
         // glyph indices
         let glyph_indices = VertexBuffer::new(gl, 1, glow::INT, ByInstance);
 
-        let vao = VertexArray::new(
-            gl,
-            vec![vbo, cell_rects.clone(), glyph_indices.clone()],
-        );
-
-        let mut ebo = ElementBuffer::new(gl);
-        ebo.set_data(gl, &indices[..]);
-
-        let program = Program::new(
-            gl,
-            include_bytes!("../shaders/glyph.v.glsl"),
-            include_bytes!("../shaders/glyph.f.glsl"),
-        );
+        quad.vao.add_buffer(gl, cell_rects.clone());
+        quad.vao.add_buffer(gl, glyph_indices.clone());
 
         let mut cache = GlyphCache::new(gl, 0);
         let texture = cache.make_atlas(gl);
 
-        let obj = Object::new(vao, ebo, Some(texture.clone()), program);
+        let obj = quad.into_object(Some(texture.clone()));
 
         Self {
             obj,
@@ -134,7 +114,7 @@ impl Glyphs {
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
         self.width = width;
         self.height = height;
-        self.obj.program.set_uniform(
+        self.obj.program().set_uniform(
             gl,
             "viewport",
             rect(0, 0, width as i32, height as i32),

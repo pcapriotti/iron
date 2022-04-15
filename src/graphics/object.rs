@@ -9,7 +9,7 @@ pub struct Object {
     vao: VertexArray,
     ebo: ElementBuffer,
     texture: Option<Texture>,
-    pub program: Program,
+    program: Program,
 }
 
 impl Object {
@@ -49,5 +49,9 @@ impl Object {
         );
         gl.bind_vertex_array(None);
         gl.use_program(None);
+    }
+
+    pub fn program(&mut self) -> &mut Program {
+        &mut self.program
     }
 }

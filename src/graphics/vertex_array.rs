@@ -7,20 +7,20 @@ pub struct VertexArray {
 }
 
 impl VertexArray {
-    pub fn new(gl: &glow::Context, buffers: Vec<VertexBuffer>) -> Self {
+    pub fn new(gl: &glow::Context) -> Self {
         let vao = unsafe { gl.create_vertex_array().unwrap() };
-        unsafe { gl.bind_vertex_array(Some(vao)) };
 
-        for (i, buffer) in buffers.iter().enumerate() {
-            buffer.enable(gl, i as u32);
-        }
-        unsafe { gl.bind_buffer(glow::ARRAY_BUFFER, None) };
-
-        unsafe { gl.bind_vertex_array(None) };
         Self {
             inner: vao,
-            buffers,
+            buffers: Vec::new(),
         }
+    }
+
+    pub fn add_buffer(&mut self, gl: &glow::Context, buffer: VertexBuffer) {
+        unsafe { gl.bind_vertex_array(Some(self.inner)) };
+        buffer.enable(gl, self.buffers.len() as u32);
+        self.buffers.push(buffer);
+        unsafe { gl.bind_buffer(glow::ARRAY_BUFFER, None) };
     }
 
     pub fn cleanup(&mut self, gl: &glow::Context) {
