@@ -9,6 +9,7 @@ use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use glyphs::Glyphs;
 use std::time::{Duration, Instant};
+use tiles::Tiles;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -27,6 +28,7 @@ fn main() {
         });
         ctx.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         ctx.enable(glow::BLEND);
+        ctx.enable(glow::DEPTH_TEST);
         ctx
     };
 
@@ -36,6 +38,7 @@ fn main() {
         g.setup_grid(&gl, &game);
         Some(g)
     };
+    let mut tiles = Tiles::new(&gl);
     eloop.run(move |e, _target, cf| {
         *cf =
             ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
@@ -43,10 +46,16 @@ fn main() {
             Event::LoopDestroyed => {
                 let mut glyphs = glyphs.take().unwrap();
                 glyphs.cleanup(&gl);
+                tiles.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
                 let glyphs = glyphs.as_mut().unwrap();
-                draw_window(&gl, &glyphs);
+                unsafe {
+                    gl.clear_color(0.148, 0.148, 0.148, 1.0);
+                    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+                    tiles.render(&gl);
+                    glyphs.render(&gl);
+                }
                 win.swap_buffers().unwrap();
             }
             Event::WindowEvent { event: ref e, .. } => {
@@ -77,12 +86,4 @@ fn main() {
             _ => {}
         }
     });
-}
-
-fn draw_window(gl: &glow::Context, glyphs: &Glyphs) {
-    unsafe {
-        gl.clear_color(0.148, 0.148, 0.148, 1.0);
-        gl.clear(glow::COLOR_BUFFER_BIT);
-        glyphs.render(&gl);
-    }
 }

@@ -1,8 +1,7 @@
 use crate::game::Game;
 use crate::graphics::util::rect;
 use crate::graphics::{
-    ElementBuffer, GlyphCache, Instancing::*, Object, Program, Quad, Texture,
-    VertexArray, VertexBuffer,
+    GlyphCache, Instancing::*, Object, Quad, Texture, VertexBuffer,
 };
 
 pub struct Glyphs {
