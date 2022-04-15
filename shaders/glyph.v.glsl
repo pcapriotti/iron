@@ -18,11 +18,6 @@ flat out vec4 uv_rect;
 
 void main() {
   glyph_info_t info = atlas.info[glyph];
-  /* uv = info.uv_rect.xy + info.uv_rect.zw * uv0; */
-
-  /* vec2 pos = vec2(cell_rect.x + info.rect.x, */
-  /*   cell_rect.y + cell_rect.w - info.rect.y - info.rect.w); */
-  /* pos += info.rect.zw * p; */
 
   // position of cell rect vertex in pixel coordinates
   vec2 pos = cell_rect.xy + cell_rect.zw * p;
@@ -32,7 +27,6 @@ void main() {
   vec2 alpha = info.uv_rect.zw / info.rect.zw;
   vec2 beta = info.uv_rect.xy - alpha * info.rect.xy;
 
-  /* uv = info.uv_rect.xy + info.uv_rect.zw * uv0; */
   uv = beta + alpha * vec2(p.x, p.y);
   uv_rect = info.uv_rect;
 

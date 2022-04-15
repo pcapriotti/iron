@@ -32,24 +32,29 @@ fn main() {
         ctx
     };
 
-    let game = Game::new(4, 4);
-    let mut glyphs = {
-        let mut g = Glyphs::new(&gl);
-        g.setup_grid(&gl, &game);
-        Some(g)
-    };
+    // init a game state
+    let mut game = Game::new(4, 4);
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+    game.add_random_tile();
+
+    let mut glyphs = Glyphs::new(&gl);
     let mut tiles = Tiles::new(&gl);
+
     eloop.run(move |e, _target, cf| {
         *cf =
             ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {
             Event::LoopDestroyed => {
-                let mut glyphs = glyphs.take().unwrap();
                 glyphs.cleanup(&gl);
                 tiles.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
-                let glyphs = glyphs.as_mut().unwrap();
                 unsafe {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
@@ -67,10 +72,10 @@ fn main() {
                             gl.viewport(0, 0, sz.width as i32, sz.height as i32)
                         };
 
-                        if let Some(glyphs) = &mut glyphs {
-                            glyphs.resize(&gl, sz.width, sz.height);
-                            glyphs.setup_grid(&gl, &game);
-                        }
+                        glyphs.resize(&gl, sz.width, sz.height);
+                        glyphs.setup_grid(&gl, &game);
+                        tiles.resize(&gl, sz.width, sz.height);
+                        tiles.update(&gl, &game);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
