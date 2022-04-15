@@ -1,13 +1,12 @@
 use crate::game::Game;
 use crate::graphics::util::rect;
 use crate::graphics::{Instancing::*, Object, Quad, VertexBuffer};
+use crate::layout::Layout;
 
 pub struct Tiles {
     obj: Object,
     rects: VertexBuffer,
     colours: VertexBuffer,
-    width: u32,
-    height: u32,
     num_instances: u32,
 }
 
@@ -29,8 +28,6 @@ impl Tiles {
             obj: quad.into_object(None),
             rects,
             colours,
-            width: 0,
-            height: 0,
             num_instances: 0,
         }
     }
@@ -44,8 +41,6 @@ impl Tiles {
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
         self.obj.program().set_uniform(
             gl,
             "viewport",
@@ -53,31 +48,17 @@ impl Tiles {
         );
     }
 
-    pub fn update(&mut self, gl: &glow::Context, game: &Game) {
+    pub fn update(&mut self, gl: &glow::Context, layout: &Layout, game: &Game) {
         let mut rects: Vec<u32> = Vec::new();
         let mut colours: Vec<f32> = Vec::new();
 
-        let unit = std::cmp::min(
-            self.width / game.width() as u32,
-            self.height / game.height() as u32,
-        );
-        let gap = (unit as f32 * 0.07) as u32;
-        let display_width = game.width() as u32 * unit;
-        let display_height = game.height() as u32 * unit;
-
-        let x0 = (self.width - display_width) / 2;
-        let y0 = (self.height - display_height) / 2;
-
         let mut count = 0;
-        for (i, value) in game.tiles() {
-            let x = i % game.width();
-            let y = i / game.width();
-
+        for ((x, y), value) in game.tiles() {
             rects.extend_from_slice(&[
-                x0 + x as u32 * unit + gap,
-                y0 + y as u32 * unit + gap,
-                unit - 2 * gap,
-                unit - 2 * gap,
+                layout.origin.0 + x as u32 * layout.unit + layout.gap,
+                layout.origin.1 + y as u32 * layout.unit + layout.gap,
+                layout.unit - 2 * layout.gap,
+                layout.unit - 2 * layout.gap,
             ]);
             colours.extend_from_slice(match value {
                 0 => &[0.5, 0.7, 0.88],

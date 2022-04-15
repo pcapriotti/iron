@@ -1,6 +1,7 @@
 mod game;
 mod glyphs;
 mod graphics;
+mod layout;
 mod tiles;
 
 use game::Game;
@@ -8,6 +9,7 @@ use glow::HasContext;
 use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use glyphs::Glyphs;
+use layout::Layout;
 use std::time::{Duration, Instant};
 use tiles::Tiles;
 
@@ -59,7 +61,7 @@ fn main() {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
                     tiles.render(&gl);
-                    // glyphs.render(&gl);
+                    glyphs.render(&gl);
                 }
                 win.swap_buffers().unwrap();
             }
@@ -72,10 +74,16 @@ fn main() {
                             gl.viewport(0, 0, sz.width as i32, sz.height as i32)
                         };
 
-                        glyphs.resize(&gl, sz.width, sz.height);
-                        glyphs.setup_grid(&gl, &game);
+                        let layout = Layout::compute(
+                            sz.width,
+                            sz.height,
+                            game.width(),
+                            game.height(),
+                        );
                         tiles.resize(&gl, sz.width, sz.height);
-                        tiles.update(&gl, &game);
+                        tiles.update(&gl, &layout, &game);
+                        glyphs.resize(&gl, sz.width, sz.height);
+                        glyphs.update(&gl, &layout, &game);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {

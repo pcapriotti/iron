@@ -1,15 +1,13 @@
 use crate::game::Game;
 use crate::graphics::util::rect;
-use crate::graphics::{
-    GlyphCache, Instancing::*, Object, Quad, Texture, VertexBuffer,
-};
+use crate::graphics::{GlyphCache, Instancing::*, Object, Quad, VertexBuffer};
+use crate::layout::Layout;
 
 pub struct Glyphs {
     obj: Object,
 
     cell_rects: VertexBuffer,
     glyph_indices: VertexBuffer,
-    texture: Texture,
 
     cache: GlyphCache,
     num_instances: u32,
@@ -18,8 +16,6 @@ pub struct Glyphs {
 }
 
 impl Glyphs {
-    const GAP: f32 = 0.03;
-
     pub fn new(gl: &glow::Context) -> Self {
         let mut quad = Quad::new(
             gl,
@@ -38,16 +34,16 @@ impl Glyphs {
 
         let mut cache = GlyphCache::new(gl, 0);
         let texture = cache.make_atlas(gl);
+        cache.upload_atlas(gl, &texture.bind(gl));
 
-        let obj = quad.into_object(Some(texture.clone()));
+        let obj = quad.into_object(Some(texture));
 
         Self {
             obj,
             cell_rects,
             glyph_indices,
-            texture,
             cache,
-            num_instances: 1,
+            num_instances: 0,
             width: 0,
             height: 0,
         }
@@ -62,52 +58,33 @@ impl Glyphs {
         self.obj.render(gl, self.num_instances);
     }
 
-    pub fn setup_grid(&mut self, gl: &glow::Context, game: &Game) {
-        if self.width == 0 || self.height == 0 {
-            return;
+    pub fn update(&mut self, gl: &glow::Context, layout: &Layout, game: &Game) {
+        let mut cell_rects: Vec<u32> = Vec::new();
+        let mut glyph_indices: Vec<u32> = Vec::new();
+
+        let unit = (layout.unit as f32 * 0.28) as u32;
+        let margin = ((layout.unit - unit) / 2, (layout.unit - unit) / 2);
+
+        let mut count = 0;
+        for ((x, y), value) in game.tiles() {
+            let value = 1 << value;
+            let value = value % 10; // TODO: support multiple digits
+
+            cell_rects.extend_from_slice(&[
+                layout.origin.0 + x as u32 * layout.unit + margin.0,
+                layout.origin.1 + y as u32 * layout.unit + margin.1,
+                unit,
+                unit,
+            ]);
+            glyph_indices
+                .push(self.cache.index_of(('0' as u8 + value) as char) as u32);
+            count += 1;
         }
 
-        self.num_instances = (game.width() * game.height()) as u32;
-
-        let mut cell_rects: Vec<i32> = Vec::new();
-        let mut glyph_indices: Vec<i32> = Vec::new();
-
-        let (gap, cell_size) = if self.width < self.height {
-            let gap = (self.width as f32 * Self::GAP) as i32;
-            (
-                gap,
-                ((self.width as f32 - gap as f32) / game.width() as f32) as i32
-                    - gap,
-            )
-        } else {
-            let gap = (self.height as f32 * Self::GAP) as i32;
-            (
-                gap,
-                ((self.height as f32 - gap as f32) / game.height() as f32)
-                    as i32
-                    - gap,
-            )
-        };
-
-        for y in 0..game.height() as i32 {
-            for x in 0..game.width() as i32 {
-                let r = [
-                    gap + x * (gap + cell_size),
-                    gap + y * (gap + cell_size),
-                    cell_size,
-                    cell_size,
-                ];
-                cell_rects.extend_from_slice(&r);
-                glyph_indices.push(65 + x + 4 * y);
-            }
-        }
-
-        self.cell_rects
-            .set_data(gl, &cell_rects[..], glow::DYNAMIC_DRAW);
+        self.num_instances = count;
+        self.cell_rects.set_data(gl, &cell_rects, glow::STATIC_DRAW);
         self.glyph_indices
-            .set_data(gl, &glyph_indices[..], glow::DYNAMIC_DRAW);
-
-        self.cache.upload_atlas(gl, &self.texture.bind(gl));
+            .set_data(gl, &glyph_indices, glow::STATIC_DRAW);
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
