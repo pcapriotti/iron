@@ -4,9 +4,6 @@ use crate::graphics::util::rect;
 use crate::graphics::{
     ElementBuffer, Instancing::*, Object, Program, VertexArray, VertexBuffer,
 };
-use crate::v2::V2;
-use glow::HasContext;
-use rusttype::Rect;
 
 pub struct Tile {
     obj: Object,
@@ -127,17 +124,12 @@ impl Tile {
             }
         }
 
-        unsafe {
-            self.cell_rects
-                .set_data(gl, &cell_rects[..], glow::DYNAMIC_DRAW);
-            self.glyph_indices.set_data(
-                gl,
-                &glyph_indices[..],
-                glow::DYNAMIC_DRAW,
-            );
+        self.cell_rects
+            .set_data(gl, &cell_rects[..], glow::DYNAMIC_DRAW);
+        self.glyph_indices
+            .set_data(gl, &glyph_indices[..], glow::DYNAMIC_DRAW);
 
-            self.glyphs.upload_atlas(gl, &self.obj.texture.bind(gl));
-        }
+        self.glyphs.upload_atlas(gl, &self.obj.texture.bind(gl));
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {

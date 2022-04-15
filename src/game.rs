@@ -1,6 +1,7 @@
 pub type Value = u8;
 
 /// State of the game.
+#[allow(dead_code)]
 pub struct Game {
     width: usize,
     height: usize,

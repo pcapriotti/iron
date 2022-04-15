@@ -1,4 +1,4 @@
-use super::vertex_buffer::{Instancing, VertexBuffer};
+use super::vertex_buffer::VertexBuffer;
 use glow::HasContext;
 
 pub struct VertexArray {

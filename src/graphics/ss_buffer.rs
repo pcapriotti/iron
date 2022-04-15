@@ -26,11 +26,11 @@ impl ShaderStorageBuffer {
         unsafe { gl.delete_buffer(self.inner) };
     }
 
-    pub fn bind(&self, gl: &glow::Context, index: i32) {
+    pub fn bind(&self, gl: &glow::Context, index: u32) {
         unsafe {
             gl.bind_buffer_base(
                 glow::SHADER_STORAGE_BUFFER,
-                0,
+                index,
                 Some(self.inner),
             );
         }

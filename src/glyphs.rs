@@ -90,7 +90,7 @@ impl GlyphCache {
             .unwrap();
     }
 
-    pub fn make_atlas(&mut self, gl: &glow::Context, index: i32) -> Texture {
+    pub fn make_atlas(&mut self, gl: &glow::Context, index: u32) -> Texture {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -106,7 +106,7 @@ impl GlyphCache {
             glyphs
         };
 
-        let mut tex = Texture::new(gl, Self::WIDTH, Self::HEIGHT);
+        let tex = Texture::new(gl, Self::WIDTH, Self::HEIGHT);
         self.upload_atlas(gl, &tex.bind(gl));
 
         unsafe { gl.bind_texture(glow::TEXTURE_2D, None) };

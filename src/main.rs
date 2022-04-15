@@ -2,7 +2,6 @@ mod game;
 mod glyphs;
 mod graphics;
 mod tile;
-mod v2;
 
 use game::Game;
 use glow::HasContext;
@@ -10,7 +9,6 @@ use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use std::time::{Duration, Instant};
 use tile::Tile;
-use v2::V2;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -32,7 +30,7 @@ fn main() {
         ctx
     };
 
-    let mut game = Game::new(4, 4);
+    let game = Game::new(4, 4);
     let mut tile = {
         let mut tile = Tile::new(&gl);
         tile.setup_grid(&gl, &game);
