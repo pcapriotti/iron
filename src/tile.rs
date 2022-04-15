@@ -60,17 +60,9 @@ impl Tile {
 
         let mut glyphs = Glyphs::new().unwrap();
 
-        let atlas = glyphs.make_atlas(gl).unwrap();
+        let texture = glyphs.make_atlas(gl, 0).unwrap();
 
-        unsafe {
-            gl.bind_buffer_base(
-                glow::SHADER_STORAGE_BUFFER,
-                0,
-                Some(atlas.buffer()),
-            );
-        }
-
-        let obj = Object::new(vao, ebo, atlas.texture(), program);
+        let obj = Object::new(vao, ebo, texture, program);
 
         Self {
             obj,

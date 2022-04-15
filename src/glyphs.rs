@@ -1,4 +1,4 @@
-use crate::graphics::{BoundTexture, Texture};
+use crate::graphics::{BoundTexture, ShaderStorageBuffer, Texture};
 use anyhow::Result;
 use glow::HasContext;
 use rusttype::gpu_cache::Cache;
@@ -19,25 +19,6 @@ pub struct GlyphInfo<'a> {
     glyph: PositionedGlyph<'a>,
     uv_rect: Rect<f32>,
     rect: Rect<f32>,
-}
-
-/// A glyph cache texture, together with a shader buffer object.
-///
-/// The buffer contains information for each glyph in the texture. The elements of the buffer are
-/// ordered by character.
-pub struct Atlas {
-    texture: Texture,
-    buffer: glow::NativeBuffer,
-}
-
-impl Atlas {
-    pub fn texture(self) -> Texture {
-        self.texture
-    }
-
-    pub fn buffer(&self) -> glow::NativeBuffer {
-        self.buffer
-    }
 }
 
 impl<'a> GlyphInfo<'a> {
@@ -108,7 +89,11 @@ impl Glyphs {
         Ok(())
     }
 
-    pub fn make_atlas(&mut self, gl: &glow::Context) -> Result<Atlas> {
+    pub fn make_atlas(
+        &mut self,
+        gl: &glow::Context,
+        index: i32,
+    ) -> Result<Texture> {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -170,28 +155,16 @@ impl Glyphs {
             infos
         };
 
-        // create shader storage buffer
-        let ssbo = unsafe {
-            let ssbo = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(ssbo));
-            let data = {
-                let mut data = Vec::new();
-                for info in infos {
-                    info.write_to(&mut data);
-                }
-                data
-            };
-            gl.buffer_data_u8_slice(
-                glow::SHADER_STORAGE_BUFFER,
-                &data,
-                glow::STATIC_DRAW,
-            );
-            ssbo
-        };
+        {
+            let mut ssbo = ShaderStorageBuffer::new(gl);
+            let mut data = Vec::new();
+            for info in infos {
+                info.write_to(&mut data);
+            }
+            ssbo.set_data(gl, &data);
+            ssbo.bind(gl, index);
+        }
 
-        Ok(Atlas {
-            texture: tex,
-            buffer: ssbo,
-        })
+        Ok(tex)
     }
 }
