@@ -1,6 +1,7 @@
+use crate::graphics::{BoundTexture, Texture};
 use anyhow::Result;
 use glow::HasContext;
-use rusttype::gpu_cache::{Cache, TextureCoords};
+use rusttype::gpu_cache::Cache;
 use rusttype::{point, Font, Point, PositionedGlyph, Rect, Scale};
 
 const MAIN_FONT_ID: usize = 0;
@@ -25,12 +26,12 @@ pub struct GlyphInfo<'a> {
 /// The buffer contains information for each glyph in the texture. The elements of the buffer are
 /// ordered by character.
 pub struct Atlas {
-    texture: glow::NativeTexture,
+    texture: Texture,
     buffer: glow::NativeBuffer,
 }
 
 impl Atlas {
-    pub fn texture(&self) -> glow::NativeTexture {
+    pub fn texture(self) -> Texture {
         self.texture
     }
 
@@ -40,7 +41,7 @@ impl Atlas {
 }
 
 impl<'a> GlyphInfo<'a> {
-    pub fn write_to(&self, i: u32, out: &mut Vec<u8>) {
+    pub fn write_to(&self, out: &mut Vec<u8>) {
         fn write_rect<T>(rect: &Rect<T>, out: &mut Vec<u8>)
         where
             T: std::ops::Sub<Output = T>,
@@ -86,7 +87,11 @@ impl Glyphs {
         Ok(Self { font, cache, scale })
     }
 
-    pub fn upload_atlas(&mut self, gl: &glow::Context) -> Result<()> {
+    pub fn upload_atlas(
+        &mut self,
+        gl: &glow::Context,
+        _tex: &BoundTexture,
+    ) -> Result<()> {
         self.cache.cache_queued(|rect, data| unsafe {
             gl.tex_sub_image_2d(
                 glow::TEXTURE_2D,
@@ -119,36 +124,8 @@ impl Glyphs {
             glyphs
         };
 
-        // create texture
-        let tex = unsafe {
-            let tex = gl.create_texture().unwrap();
-            gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-            gl.tex_parameter_i32(
-                glow::TEXTURE_2D,
-                glow::TEXTURE_MAG_FILTER,
-                glow::LINEAR as i32,
-            );
-            gl.tex_parameter_i32(
-                glow::TEXTURE_2D,
-                glow::TEXTURE_MIN_FILTER,
-                glow::LINEAR as i32,
-            );
-            gl.tex_image_2d(
-                glow::TEXTURE_2D,
-                0,
-                glow::RGBA as i32,
-                Self::WIDTH as i32,
-                Self::HEIGHT as i32,
-                0,
-                glow::RED,
-                glow::UNSIGNED_BYTE,
-                Some(&vec![0xff; (Self::WIDTH * Self::HEIGHT) as usize]),
-            );
-            gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
-            tex
-        };
-
-        self.upload_atlas(&gl)?;
+        let mut tex = Texture::new(gl, Self::WIDTH, Self::HEIGHT);
+        self.upload_atlas(gl, &tex.bind(gl))?;
 
         unsafe { gl.bind_texture(glow::TEXTURE_2D, None) };
 
@@ -199,8 +176,8 @@ impl Glyphs {
             gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(ssbo));
             let data = {
                 let mut data = Vec::new();
-                for (i, info) in infos.iter().enumerate() {
-                    info.write_to(i as u32, &mut data);
+                for info in infos {
+                    info.write_to(&mut data);
                 }
                 data
             };

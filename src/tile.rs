@@ -144,9 +144,9 @@ impl Tile {
                 glow::DYNAMIC_DRAW,
             );
 
-            gl.bind_texture(glow::TEXTURE_2D, Some(self.obj.texture));
-            self.glyphs.upload_atlas(&gl).unwrap();
-            gl.bind_texture(glow::TEXTURE_2D, None);
+            self.glyphs
+                .upload_atlas(gl, &self.obj.texture.bind(gl))
+                .unwrap();
         }
     }
 
