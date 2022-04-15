@@ -1,12 +1,13 @@
 #version 430 core
 layout (location = 0) in vec2 p;
 layout (location = 1) in ivec4 rect;
+layout (location = 2) in vec3 colour;
 
-out vec2 uv;
+out vec3 frag_col;
 uniform ivec4 viewport;
 
 void main() {
-  uv = p;
+  frag_col = colour;
 
   vec2 pos = rect.xy + rect.zw * p;
 

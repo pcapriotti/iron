@@ -59,7 +59,7 @@ fn main() {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
                     tiles.render(&gl);
-                    glyphs.render(&gl);
+                    // glyphs.render(&gl);
                 }
                 win.swap_buffers().unwrap();
             }

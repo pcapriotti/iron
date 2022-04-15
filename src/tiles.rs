@@ -5,6 +5,7 @@ use crate::graphics::{Instancing::*, Object, Quad, VertexBuffer};
 pub struct Tiles {
     obj: Object,
     rects: VertexBuffer,
+    colours: VertexBuffer,
     width: u32,
     height: u32,
     num_instances: u32,
@@ -21,9 +22,13 @@ impl Tiles {
         let rects = VertexBuffer::new(gl, 4, glow::INT, ByInstance);
         quad.vao.add_buffer(gl, rects.clone());
 
+        let colours = VertexBuffer::new(gl, 3, glow::FLOAT, ByInstance);
+        quad.vao.add_buffer(gl, colours.clone());
+
         Tiles {
             obj: quad.into_object(None),
             rects,
+            colours,
             width: 0,
             height: 0,
             num_instances: 0,
@@ -50,6 +55,7 @@ impl Tiles {
 
     pub fn update(&mut self, gl: &glow::Context, game: &Game) {
         let mut rects: Vec<u32> = Vec::new();
+        let mut colours: Vec<f32> = Vec::new();
 
         let unit = std::cmp::min(
             self.width / game.width() as u32,
@@ -63,7 +69,7 @@ impl Tiles {
         let y0 = (self.height - display_height) / 2;
 
         let mut count = 0;
-        for (i, _value) in game.tiles() {
+        for (i, value) in game.tiles() {
             let x = i % game.width();
             let y = i / game.width();
 
@@ -73,10 +79,17 @@ impl Tiles {
                 unit - 2 * gap,
                 unit - 2 * gap,
             ]);
+            colours.extend_from_slice(match value {
+                0 => &[0.5, 0.7, 0.88],
+                1 => &[0.25, 0.6, 0.82],
+                2 => &[0.0, 0.0, 1.0],
+                _ => &[1.0, 1.0, 1.0],
+            });
             count += 1;
         }
 
         self.rects.set_data(gl, &rects, glow::STATIC_DRAW);
+        self.colours.set_data(gl, &colours, glow::STATIC_DRAW);
         self.num_instances = count;
     }
 }
