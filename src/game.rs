@@ -20,8 +20,8 @@ pub enum Direction {
 
 #[derive(PartialEq, Debug)]
 pub struct Move {
-    src: usize,
-    dst: usize,
+    pub src: usize,
+    pub dst: usize,
 }
 
 impl Move {

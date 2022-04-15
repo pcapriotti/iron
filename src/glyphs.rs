@@ -1,4 +1,4 @@
-use crate::game::Game;
+use crate::game::{Game, Move};
 use crate::graphics::util::rect;
 use crate::graphics::{
     GlyphCache, GlyphInfo, Instancing::*, Object, Quad, VertexBuffer,
@@ -62,8 +62,15 @@ impl Glyphs {
         self.obj.render(gl, self.num_instances);
     }
 
-    pub fn update(&mut self, gl: &glow::Context, layout: &Layout, game: &Game) {
-        let mut cell_rects: Vec<u32> = Vec::new();
+    pub fn update(
+        &mut self,
+        gl: &glow::Context,
+        layout: &Layout,
+        game: &Game,
+        moves: &[Move],
+        time: f32,
+    ) {
+        let mut cell_rects: Vec<i32> = Vec::new();
         let mut glyph_indices: Vec<u32> = Vec::new();
 
         let unit = (layout.unit as f32 * 0.28) as u32;
@@ -90,16 +97,34 @@ impl Glyphs {
             let margin =
                 ((layout.unit - text_width) / 2, (layout.unit - unit) / 2);
 
+            let (delta_x, delta_y) = if let Some(mv_index) =
+                moves.iter().position(|m| m.dst == x + y * game.width())
+            {
+                let mv = &moves[mv_index];
+
+                let src_point = (mv.src % game.width(), mv.src / game.width());
+                let dst_point = (x, y);
+                let delta_x = ((dst_point.0 as f32 - src_point.0 as f32)
+                    * layout.unit as f32
+                    * (1.0 - time)) as i32;
+                let delta_y = ((dst_point.1 as f32 - src_point.1 as f32)
+                    * layout.unit as f32
+                    * (1.0 - time)) as i32;
+                (delta_x, delta_y)
+            } else {
+                (0, 0)
+            };
+
             for i in 0..value.len() {
-                cell_rects.extend_from_slice(&[
-                    layout.origin.0
-                        + x as u32 * layout.unit
-                        + margin.0
-                        + x_offsets[i],
-                    layout.origin.1 + y as u32 * layout.unit + margin.1,
-                    unit,
-                    unit,
-                ]);
+                let x = (layout.origin.0
+                    + x as u32 * layout.unit
+                    + margin.0
+                    + x_offsets[i]) as i32
+                    - delta_x;
+                let y = (layout.origin.1 + y as u32 * layout.unit + margin.1)
+                    as i32
+                    - delta_y;
+                cell_rects.extend_from_slice(&[x, y, unit as i32, unit as i32]);
                 count += 1;
             }
         }

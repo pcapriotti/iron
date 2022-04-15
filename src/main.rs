@@ -1,15 +1,18 @@
+mod animation;
 mod game;
 mod glyphs;
 mod graphics;
 mod layout;
 mod tiles;
 
+use animation::{Animation, MoveAnimation};
 use game::{Direction, Game};
 use glow::HasContext;
 use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use glyphs::Glyphs;
 use layout::Layout;
+use std::time::Duration;
 use tiles::Tiles;
 
 fn main() {
@@ -41,6 +44,7 @@ fn main() {
     let mut tiles = Tiles::new(&gl);
 
     let mut layout = Layout::compute(0, 0, game.width(), game.height());
+    let mut anim: Option<MoveAnimation> = None;
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::Wait;
@@ -50,6 +54,16 @@ fn main() {
                 tiles.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
+                if let Some(MoveAnimation { animation, moves }) = &anim {
+                    let t = animation.time().min(1.0);
+                    tiles.update(&gl, &layout, &game, moves, t);
+                    glyphs.update(&gl, &layout, &game, moves, t);
+                    win.window().request_redraw();
+
+                    if t >= 1.0 {
+                        anim = None;
+                    }
+                }
                 unsafe {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
@@ -74,9 +88,9 @@ fn main() {
                             game.height(),
                         );
                         tiles.resize(&gl, sz.width, sz.height);
-                        tiles.update(&gl, &layout, &game);
+                        tiles.update(&gl, &layout, &game, &[], 0.0);
                         glyphs.resize(&gl, sz.width, sz.height);
-                        glyphs.update(&gl, &layout, &game);
+                        glyphs.update(&gl, &layout, &game, &[], 0.0);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
@@ -96,14 +110,28 @@ fn main() {
                                 Right | L => Some(Direction::E),
                                 _ => None,
                             };
+                            // do not accept moves while another one is being animated
+                            if anim.is_some() {
+                                return;
+                            }
                             if let Some(d) = dir {
                                 let moves = game.step(d);
                                 if !moves.is_empty() {
                                     game.add_random_tile();
+                                    tiles.update(
+                                        &gl, &layout, &game, &moves, 0.0,
+                                    );
+                                    glyphs.update(
+                                        &gl, &layout, &game, &moves, 0.0,
+                                    );
+                                    anim = Some(MoveAnimation {
+                                        animation: Animation::new(
+                                            Duration::from_millis(200),
+                                        ),
+                                        moves: moves,
+                                    });
+                                    win.window().request_redraw();
                                 }
-                                tiles.update(&gl, &layout, &game);
-                                glyphs.update(&gl, &layout, &game);
-                                win.window().request_redraw();
                             }
                         }
                     }
