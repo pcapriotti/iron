@@ -1,5 +1,6 @@
 mod game;
 mod glyphs;
+mod graphics;
 mod tile;
 mod v2;
 
@@ -42,7 +43,7 @@ fn main() {
             ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
         match e {
             Event::LoopDestroyed => {
-                let tile = tile.take().unwrap();
+                let mut tile = tile.take().unwrap();
                 tile.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {

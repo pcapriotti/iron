@@ -1,12 +1,13 @@
 use crate::game::Game;
 use crate::glyphs::Glyphs;
+use crate::graphics::{Instancing::*, VertexBuffer};
 use crate::v2::V2;
 use glow::HasContext;
 
 pub struct Tile {
-    vbo: glow::NativeBuffer,
-    cell_rects: glow::NativeBuffer,
-    glyph_indices: glow::NativeBuffer,
+    vbo: VertexBuffer,
+    cell_rects: VertexBuffer,
+    glyph_indices: VertexBuffer,
     vao: glow::NativeVertexArray,
     program: glow::NativeProgram,
     texture: glow::NativeTexture,
@@ -32,47 +33,22 @@ impl Tile {
                 2, 1, 3, // top right
             ];
             let vao = gl.create_vertex_array().unwrap();
-            let vbo = gl.create_buffer().unwrap();
             let ebo = gl.create_buffer().unwrap();
 
             gl.bind_vertex_array(Some(vao));
 
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(vbo));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&vertices[..]),
-                glow::STATIC_DRAW,
-            );
-
             // vertices
-            gl.vertex_attrib_pointer_f32(0, 2, glow::FLOAT, false, 0, 0);
-            gl.enable_vertex_attrib_array(0);
+            let mut vbo = VertexBuffer::new(gl, 2, glow::FLOAT, ByVertex);
+            vbo.enable(gl, 0);
+            vbo.set_data(gl, &vertices[..], glow::STATIC_DRAW);
 
             // cell rects
-            let cell_rect_array: [i32; 4] = [0, 0, 0, 0];
-            let cell_rects = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(cell_rects));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&cell_rect_array[..]),
-                glow::STATIC_DRAW,
-            );
-            gl.vertex_attrib_pointer_i32(2, 4, glow::INT, 0, 0);
-            gl.vertex_attrib_divisor(2, 1);
-            gl.enable_vertex_attrib_array(2);
+            let cell_rects = VertexBuffer::new(gl, 4, glow::INT, ByInstance);
+            cell_rects.enable(gl, 1);
 
             // glyph indices
-            let glyph_index_array: [i32; 1] = [0];
-            let glyph_indices = gl.create_buffer().unwrap();
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(glyph_indices));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&glyph_index_array[..]),
-                glow::STATIC_DRAW,
-            );
-            gl.vertex_attrib_pointer_i32(3, 1, glow::INT, 0, 0);
-            gl.vertex_attrib_divisor(3, 1);
-            gl.enable_vertex_attrib_array(3);
+            let glyph_indices = VertexBuffer::new(gl, 1, glow::INT, ByInstance);
+            glyph_indices.enable(gl, 2);
 
             gl.bind_buffer(glow::ARRAY_BUFFER, None);
 
@@ -142,9 +118,9 @@ impl Tile {
         }
     }
 
-    pub fn cleanup(self, gl: &glow::Context) {
+    pub fn cleanup(&mut self, gl: &glow::Context) {
         unsafe {
-            gl.delete_buffer(self.vbo);
+            self.vbo.cleanup(gl);
             gl.delete_vertex_array(self.vao);
             gl.delete_program(self.program);
         }
@@ -209,16 +185,11 @@ impl Tile {
         }
 
         unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.cell_rects));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&cell_rects[..]),
-                glow::DYNAMIC_DRAW,
-            );
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.glyph_indices));
-            gl.buffer_data_u8_slice(
-                glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(&glyph_indices[..]),
+            self.cell_rects
+                .set_data(gl, &cell_rects[..], glow::DYNAMIC_DRAW);
+            self.glyph_indices.set_data(
+                gl,
+                &glyph_indices[..],
                 glow::DYNAMIC_DRAW,
             );
 
