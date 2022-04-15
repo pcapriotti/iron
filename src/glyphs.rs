@@ -71,9 +71,6 @@ impl Glyphs {
             x: Self::SCALE,
             y: Self::SCALE,
         };
-        println!("ascent: {}", font.v_metrics(scale).ascent);
-        println!("descent: {}", font.v_metrics(scale).descent);
-        println!("line gap: {}", font.v_metrics(scale).line_gap);
 
         // TODO: delete
         let mut cache = Cache::builder()
@@ -169,8 +166,8 @@ impl Glyphs {
                     y: Glyphs::SCALE,
                 });
 
-                // scale rect and invert y
-                let rect = Rect {
+                // scale rect and reposition
+                let mut rect = Rect {
                     min: Point {
                         x: rect.min.x as f32 / Glyphs::SCALE,
                         y: (-rect.min.y as f32 - vmetrics.descent)
@@ -182,6 +179,10 @@ impl Glyphs {
                             / Glyphs::SCALE,
                     },
                 };
+                let glyph_width = rect.width();
+                rect.min.x = 0.5 - glyph_width / 2.0;
+                rect.max.x = 0.5 + glyph_width / 2.0;
+
                 infos.push(GlyphInfo {
                     glyph,
                     uv_rect,
