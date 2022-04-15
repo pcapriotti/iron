@@ -16,7 +16,8 @@ pub struct Glyphs {
 pub struct GlyphInfo<'a> {
     #[allow(dead_code)]
     glyph: PositionedGlyph<'a>,
-    coords: TextureCoords,
+    uv_rect: Rect<f32>,
+    rect: Rect<f32>,
 }
 
 /// A glyph cache texture, together with a shader buffer object.
@@ -40,32 +41,6 @@ impl Atlas {
 
 impl<'a> GlyphInfo<'a> {
     pub fn write_to(&self, i: u32, out: &mut Vec<u8>) {
-        let (uv_rect, rect) = self.coords;
-        let vmetrics = self.glyph.font().v_metrics(Scale {
-            x: Glyphs::SCALE,
-            y: Glyphs::SCALE,
-        });
-
-        let debug = i >= 65 && i <= 80;
-        if debug {
-            println!("glyph {}: {:?}", i, rect);
-        }
-
-        // scale rect and invert y
-        let rect = Rect {
-            min: Point {
-                x: rect.min.x as f32 / Glyphs::SCALE,
-                y: (-rect.min.y as f32 - vmetrics.descent) / Glyphs::SCALE,
-            },
-            max: Point {
-                x: rect.max.x as f32 / Glyphs::SCALE,
-                y: (-rect.max.y as f32 - vmetrics.descent) / Glyphs::SCALE,
-            },
-        };
-        if debug {
-            println!("{:?}", rect);
-        }
-
         fn write_rect<T>(rect: &Rect<T>, out: &mut Vec<u8>)
         where
             T: std::ops::Sub<Output = T>,
@@ -78,8 +53,8 @@ impl<'a> GlyphInfo<'a> {
             out.extend_from_slice(bytemuck::bytes_of(&rect.height()));
         }
 
-        write_rect(&uv_rect, out);
-        write_rect(&rect, out);
+        write_rect(&self.uv_rect, out);
+        write_rect(&self.rect, out);
     }
 }
 
@@ -184,11 +159,34 @@ impl Glyphs {
         let infos = {
             let mut infos: Vec<GlyphInfo> = Vec::with_capacity(glyphs.len());
             for glyph in glyphs {
-                let coords = self
+                let (uv_rect, rect) = self
                     .cache
                     .rect_for(MAIN_FONT_ID, &glyph)?
                     .ok_or(anyhow::anyhow!("Missing glyph in the cache"))?;
-                infos.push(GlyphInfo { glyph, coords })
+
+                let vmetrics = glyph.font().v_metrics(Scale {
+                    x: Glyphs::SCALE,
+                    y: Glyphs::SCALE,
+                });
+
+                // scale rect and invert y
+                let rect = Rect {
+                    min: Point {
+                        x: rect.min.x as f32 / Glyphs::SCALE,
+                        y: (-rect.min.y as f32 - vmetrics.descent)
+                            / Glyphs::SCALE,
+                    },
+                    max: Point {
+                        x: rect.max.x as f32 / Glyphs::SCALE,
+                        y: (-rect.max.y as f32 - vmetrics.descent)
+                            / Glyphs::SCALE,
+                    },
+                };
+                infos.push(GlyphInfo {
+                    glyph,
+                    uv_rect,
+                    rect,
+                })
             }
 
             infos

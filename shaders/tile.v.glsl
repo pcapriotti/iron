@@ -1,6 +1,5 @@
 #version 430 core
 layout (location = 0) in vec2 p; // vertex coordinates in unit square
-layout (location = 1) in vec2 uv0; // uv coordinates
 layout (location = 2) in ivec4 cell_rect; // rect for the whole cell in pixels
 layout (location = 3) in int glyph; // index of the glyph in the atlas
 

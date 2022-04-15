@@ -21,12 +21,11 @@ impl Tile {
 
     pub fn new(gl: &glow::Context) -> Self {
         let (vbo, cell_rects, glyph_indices, vao) = unsafe {
-            // TODO: get rid of uv coordinates
-            let vertices: [f32; 16] = [
-                0.0, 0.0, 0.0, 1.0, // bottom left
-                1.0, 0.0, 1.0, 1.0, // bottom right
-                0.0, 1.0, 0.0, 0.0, // top left
-                1.0, 1.0, 1.0, 0.0, // top right
+            let vertices: [f32; 8] = [
+                0.0, 0.0, // bottom left
+                1.0, 0.0, // bottom right
+                0.0, 1.0, // top left
+                1.0, 1.0, // top right
             ];
             let indices: [u32; 6] = [
                 0, 1, 2, // bottom left
@@ -46,26 +45,8 @@ impl Tile {
             );
 
             // vertices
-            gl.vertex_attrib_pointer_f32(
-                0,
-                3,
-                glow::FLOAT,
-                false,
-                (std::mem::size_of::<f32>() * 4) as i32,
-                0,
-            );
+            gl.vertex_attrib_pointer_f32(0, 2, glow::FLOAT, false, 0, 0);
             gl.enable_vertex_attrib_array(0);
-
-            // uv
-            gl.vertex_attrib_pointer_f32(
-                1,
-                2,
-                glow::FLOAT,
-                false,
-                (std::mem::size_of::<f32>() * 4) as i32,
-                (std::mem::size_of::<f32>() * 2) as i32,
-            );
-            gl.enable_vertex_attrib_array(1);
 
             // cell rects
             let cell_rect_array: [i32; 4] = [0, 0, 0, 0];
