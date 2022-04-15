@@ -53,7 +53,7 @@ impl Tiles {
         let mut colours: Vec<f32> = Vec::new();
 
         let mut count = 0;
-        for ((x, y), value) in game.tiles() {
+        for ((x, y), value) in game.all_tiles() {
             rects.extend_from_slice(&[
                 layout.origin.0 + x as u32 * layout.unit + layout.gap,
                 layout.origin.1 + y as u32 * layout.unit + layout.gap,
@@ -61,10 +61,11 @@ impl Tiles {
                 layout.unit - 2 * layout.gap,
             ]);
             colours.extend_from_slice(match value {
-                0 => &[0.5, 0.7, 0.88],
-                1 => &[0.25, 0.6, 0.82],
-                2 => &[0.0, 0.0, 1.0],
-                _ => &[1.0, 1.0, 1.0],
+                None => &[0.8, 0.8, 0.8],
+                Some(0) => &[0.5, 0.7, 0.88],
+                Some(1) => &[0.25, 0.6, 0.82],
+                Some(2) => &[0.0, 0.0, 1.0],
+                _ => &[0.2, 0.2, 0.3],
             });
             count += 1;
         }

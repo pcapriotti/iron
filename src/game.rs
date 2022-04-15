@@ -39,6 +39,15 @@ impl Game {
         self.tiles[index] = Some(value);
     }
 
+    pub fn all_tiles<'a>(
+        &'a self,
+    ) -> impl Iterator<Item = ((usize, usize), &'a Option<Value>)> + 'a {
+        self.tiles
+            .iter()
+            .enumerate()
+            .map(|(i, v)| ((i % self.width(), i / self.width()), v))
+    }
+
     pub fn tiles<'a>(
         &'a self,
     ) -> impl Iterator<Item = ((usize, usize), Value)> + 'a {
