@@ -1,5 +1,5 @@
 use crate::game::Game;
-use crate::glyphs::Glyphs;
+use crate::glyphs::GlyphCache;
 use crate::graphics::util::rect;
 use crate::graphics::{
     ElementBuffer, Instancing::*, Object, Program, VertexArray, VertexBuffer,
@@ -13,7 +13,7 @@ pub struct Tile {
 
     cell_rects: VertexBuffer,
     glyph_indices: VertexBuffer,
-    glyphs: Glyphs,
+    glyphs: GlyphCache,
     num_instances: u32,
     width: u32,
     height: u32,
@@ -58,9 +58,9 @@ impl Tile {
             include_bytes!("../shaders/tile.f.glsl"),
         );
 
-        let mut glyphs = Glyphs::new().unwrap();
+        let mut glyphs = GlyphCache::new();
 
-        let texture = glyphs.make_atlas(gl, 0).unwrap();
+        let texture = glyphs.make_atlas(gl, 0);
 
         let obj = Object::new(vao, ebo, texture, program);
 
@@ -136,9 +136,7 @@ impl Tile {
                 glow::DYNAMIC_DRAW,
             );
 
-            self.glyphs
-                .upload_atlas(gl, &self.obj.texture.bind(gl))
-                .unwrap();
+            self.glyphs.upload_atlas(gl, &self.obj.texture.bind(gl));
         }
     }
 
