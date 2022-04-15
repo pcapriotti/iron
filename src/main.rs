@@ -4,9 +4,9 @@ mod graphics;
 mod layout;
 mod tiles;
 
-use game::Game;
+use game::{Direction, Game};
 use glow::HasContext;
-use glutin::event::{Event, VirtualKeyCode};
+use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use glyphs::Glyphs;
 use layout::Layout;
@@ -37,16 +37,11 @@ fn main() {
     // init a game state
     let mut game = Game::new(4, 4);
     game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
-    game.add_random_tile();
 
     let mut glyphs = Glyphs::new(&gl);
     let mut tiles = Tiles::new(&gl);
+
+    let mut layout = Layout::compute(0, 0, game.width(), game.height());
 
     eloop.run(move |e, _target, cf| {
         *cf =
@@ -74,7 +69,7 @@ fn main() {
                             gl.viewport(0, 0, sz.width as i32, sz.height as i32)
                         };
 
-                        let layout = Layout::compute(
+                        layout = Layout::compute(
                             sz.width,
                             sz.height,
                             game.width(),
@@ -88,8 +83,27 @@ fn main() {
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
                         if let Some(key) = input.virtual_keycode {
-                            if key == VirtualKeyCode::Escape {
-                                *cf = ControlFlow::Exit;
+                            use VirtualKeyCode::*;
+                            if input.state != ElementState::Pressed {
+                                return;
+                            }
+                            let dir = match key {
+                                Escape | Q => {
+                                    *cf = ControlFlow::Exit;
+                                    None
+                                }
+                                Left | H => Some(Direction::W),
+                                Down | J => Some(Direction::S),
+                                Up | K => Some(Direction::N),
+                                Right | L => Some(Direction::E),
+                                _ => None,
+                            };
+                            if let Some(d) = dir {
+                                game.step(d);
+                                game.add_random_tile();
+                                tiles.update(&gl, &layout, &game);
+                                glyphs.update(&gl, &layout, &game);
+                                win.window().request_redraw();
                             }
                         }
                     }
