@@ -1,5 +1,4 @@
 mod game;
-mod glyphs;
 mod graphics;
 mod tile;
 

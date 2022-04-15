@@ -1,8 +1,8 @@
 use crate::game::Game;
-use crate::glyphs::GlyphCache;
 use crate::graphics::util::rect;
 use crate::graphics::{
-    ElementBuffer, Instancing::*, Object, Program, VertexArray, VertexBuffer,
+    ElementBuffer, GlyphCache, Instancing::*, Object, Program, VertexArray,
+    VertexBuffer,
 };
 
 pub struct Tile {
