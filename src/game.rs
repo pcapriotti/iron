@@ -8,7 +8,7 @@ pub type Value = u8;
 pub struct Game {
     width: usize,
     height: usize,
-    tiles: Vec<Option<Value>>,
+    pub tiles: Vec<Option<Value>>,
 }
 
 pub enum Direction {

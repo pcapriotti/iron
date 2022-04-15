@@ -14,21 +14,13 @@ layout(std430, binding = 0) buffer atlas_t {
 
 uniform ivec4 viewport;
 out vec2 uv;
-flat out vec4 uv_rect;
 
 void main() {
   glyph_info_t info = atlas.info[glyph];
 
-  // position of cell rect vertex in pixel coordinates
-  vec2 pos = cell_rect.xy + cell_rect.zw * p;
-
-  // unit space -> texture space mapping
-  // f(x) = alpha x + beta
-  vec2 alpha = info.uv_rect.zw / info.rect.zw;
-  vec2 beta = info.uv_rect.xy - alpha * info.rect.xy;
-
-  uv = beta + alpha * vec2(p.x, p.y);
-  uv_rect = info.uv_rect;
+  vec4 rect = vec4(info.rect.xy * cell_rect.zw, info.rect.zw * cell_rect.zw);
+  vec2 pos = cell_rect.xy + rect.xy + rect.zw * p;
+  uv = info.uv_rect.xy + info.uv_rect.zw * p;
 
   gl_Position = vec4(
     (pos - viewport.xy) * 2 / viewport.zw - vec2(1.0, 1.0),

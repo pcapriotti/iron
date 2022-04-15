@@ -6,6 +6,7 @@ use rusttype::{point, Font, Point, PositionedGlyph, Rect, Scale};
 const MAIN_FONT_ID: usize = 0;
 
 /// Per-glyph information sent to the GPU
+#[derive(Debug)]
 pub struct GlyphInfo<'a> {
     #[allow(dead_code)]
     glyph: PositionedGlyph<'a>,
@@ -29,6 +30,10 @@ impl<'a> GlyphInfo<'a> {
 
         write_rect(&self.uv_rect, out);
         write_rect(&self.rect, out);
+    }
+
+    pub fn glyph(&self) -> &PositionedGlyph<'a> {
+        &self.glyph
     }
 }
 
@@ -55,17 +60,9 @@ impl GlyphCache {
             y: Self::SCALE,
         };
 
-        // TODO: delete
-        let mut cache = Cache::builder()
+        let cache = Cache::builder()
             .dimensions(Self::WIDTH, Self::HEIGHT)
             .build();
-        for c in 'a'..'z' {
-            let glyph = font
-                .glyph(c as char)
-                .scaled(scale)
-                .positioned(point(0.0, 0.0));
-            cache.queue_glyph(MAIN_FONT_ID, glyph);
-        }
 
         let buffer = ShaderStorageBuffer::new(gl);
         buffer.bind(gl, index);
@@ -104,7 +101,10 @@ impl GlyphCache {
         c as usize - 0x21
     }
 
-    pub fn make_atlas(&mut self, gl: &glow::Context) -> Texture {
+    pub fn make_atlas(
+        &mut self,
+        gl: &glow::Context,
+    ) -> (Vec<GlyphInfo<'static>>, Texture) {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -135,13 +135,10 @@ impl GlyphCache {
                     .unwrap()
                     .expect("Missing glyph in the cache");
 
-                let vmetrics = glyph.font().v_metrics(Scale {
-                    x: Self::SCALE,
-                    y: Self::SCALE,
-                });
+                let vmetrics = glyph.font().v_metrics(self.scale);
 
                 // scale rect and reposition
-                let mut rect = Rect {
+                let rect = Rect {
                     min: Point {
                         x: rect.min.x as f32 / Self::SCALE,
                         y: (-rect.min.y as f32 - vmetrics.descent)
@@ -153,9 +150,6 @@ impl GlyphCache {
                             / Self::SCALE,
                     },
                 };
-                let glyph_width = rect.width();
-                rect.min.x = 0.5 - glyph_width / 2.0;
-                rect.max.x = 0.5 + glyph_width / 2.0;
 
                 infos.push(GlyphInfo {
                     glyph,
@@ -169,13 +163,13 @@ impl GlyphCache {
 
         {
             let mut data = Vec::new();
-            for info in infos {
+            for info in infos.iter() {
                 info.write_to(&mut data);
             }
             self.buffer.set_data(gl, &data);
         }
 
-        tex
+        (infos, tex)
     }
 
     pub fn cleanup(&mut self, gl: &glow::Context) {
