@@ -18,6 +18,18 @@ pub enum Direction {
     S,
 }
 
+#[derive(PartialEq, Debug)]
+pub struct Move {
+    src: usize,
+    dst: usize,
+}
+
+impl Move {
+    fn new(src: usize, dst: usize) -> Move {
+        Move { src, dst }
+    }
+}
+
 impl Game {
     pub fn new(width: usize, height: usize) -> Self {
         let mut tiles = Vec::new();
@@ -64,7 +76,9 @@ impl Game {
         })
     }
 
-    pub fn step(&mut self, dir: Direction) {
+    pub fn step(&mut self, dir: Direction) -> Vec<Move> {
+        let mut moves = Vec::new();
+
         let (width, height) = match dir {
             Direction::S | Direction::N => (self.width(), self.height()),
             Direction::E | Direction::W => (self.height(), self.width()),
@@ -81,27 +95,39 @@ impl Game {
             let mut y0 = 0;
 
             for y1 in 0..height {
-                if let Some(v) = self.tiles[get(x, y1)] {
+                let i1 = get(x, y1);
+                if let Some(v) = self.tiles[i1] {
                     if y0 == y1 {
                         continue;
                     }
-                    self.tiles[get(x, y1)] = None;
-                    match self.tiles[get(x, y0)] {
+                    let i0 = get(x, y0);
+                    match self.tiles[i0] {
                         None => {
-                            self.tiles[get(x, y0)] = Some(v);
+                            self.tiles[i1] = None;
+                            self.tiles[i0] = Some(v);
+                            moves.push(Move::new(i1, i0));
                         }
                         Some(w) if w == v => {
-                            self.tiles[get(x, y0)] = Some(v + 1);
+                            self.tiles[i1] = None;
+                            self.tiles[i0] = Some(v + 1);
+                            moves.push(Move::new(i1, i0));
                             y0 += 1;
                         }
                         Some(_) => {
                             y0 += 1;
-                            self.tiles[get(x, y0)] = Some(v);
+                            let i0 = get(x, y0);
+                            if i0 != i1 {
+                                self.tiles[i1] = None;
+                                self.tiles[i0] = Some(v);
+                                moves.push(Move::new(i1, i0));
+                            }
                         }
                     };
                 }
             }
         }
+
+        moves
     }
 }
 
@@ -114,7 +140,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[0] = Some(0);
         let game2 = game.clone();
-        game.step(Direction::S);
+        assert!(game.step(Direction::S).is_empty());
         assert_eq!(game, game2);
     }
 
@@ -123,7 +149,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[3] = Some(2);
         let game2 = game.clone();
-        game.step(Direction::E);
+        assert!(game.step(Direction::E).is_empty());
         assert_eq!(game, game2);
     }
 
@@ -132,7 +158,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[13] = Some(2);
         let game2 = game.clone();
-        game.step(Direction::N);
+        assert!(game.step(Direction::N).is_empty());
         assert_eq!(game, game2);
     }
 
@@ -141,7 +167,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[0] = Some(2);
         let game2 = game.clone();
-        game.step(Direction::W);
+        assert!(game.step(Direction::W).is_empty());
         assert_eq!(game, game2);
     }
 
@@ -150,7 +176,10 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
-        game.step(Direction::S);
+        assert_eq!(
+            vec![Move::new(4, 0), Move::new(9, 1)],
+            game.step(Direction::S)
+        );
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[0] = Some(0);
@@ -163,7 +192,10 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
-        game.step(Direction::E);
+        assert_eq!(
+            vec![Move::new(4, 7), Move::new(9, 11)],
+            game.step(Direction::E)
+        );
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[7] = Some(0);
@@ -176,7 +208,10 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
-        game.step(Direction::N);
+        assert_eq!(
+            vec![Move::new(4, 12), Move::new(9, 13)],
+            game.step(Direction::N)
+        );
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[12] = Some(0);
@@ -189,7 +224,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
-        game.step(Direction::W);
+        assert_eq!(vec![Move::new(9, 8)], game.step(Direction::W));
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[4] = Some(0);
@@ -228,12 +263,12 @@ mod tests {
     fn test_step_stuck() {
         let mut game = Game::new(4, 4);
         game.tiles[1] = Some(1);
-        game.tiles[5] = Some(2);
-        game.tiles[9] = Some(3);
-        game.tiles[13] = Some(4);
+        game.tiles[5] = Some(3);
+        game.tiles[9] = Some(5);
+        game.tiles[13] = Some(7);
         let game2 = game.clone();
-        game.step(Direction::S);
-
+        let moves = game.step(Direction::S);
+        assert!(moves.is_empty());
         assert_eq!(game, game2);
     }
 

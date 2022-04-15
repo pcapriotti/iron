@@ -10,7 +10,6 @@ use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use glyphs::Glyphs;
 use layout::Layout;
-use std::time::{Duration, Instant};
 use tiles::Tiles;
 
 fn main() {
@@ -44,8 +43,7 @@ fn main() {
     let mut layout = Layout::compute(0, 0, game.width(), game.height());
 
     eloop.run(move |e, _target, cf| {
-        *cf =
-            ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(16));
+        *cf = ControlFlow::Wait;
         match e {
             Event::LoopDestroyed => {
                 glyphs.cleanup(&gl);
@@ -99,8 +97,10 @@ fn main() {
                                 _ => None,
                             };
                             if let Some(d) = dir {
-                                game.step(d);
-                                game.add_random_tile();
+                                let moves = game.step(d);
+                                if !moves.is_empty() {
+                                    game.add_random_tile();
+                                }
                                 tiles.update(&gl, &layout, &game);
                                 glyphs.update(&gl, &layout, &game);
                                 win.window().request_redraw();
