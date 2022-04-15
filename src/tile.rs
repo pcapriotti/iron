@@ -1,3 +1,4 @@
+use crate::game::Game;
 use crate::glyphs::Glyphs;
 use crate::v2::V2;
 use glow::HasContext;
@@ -11,11 +12,16 @@ pub struct Tile {
     texture: glow::NativeTexture,
     glyphs: Glyphs,
     num_instances: u32,
+    width: u32,
+    height: u32,
 }
 
 impl Tile {
+    const GAP: f32 = 0.03;
+
     pub fn new(gl: &glow::Context) -> Self {
         let (vbo, cell_rects, glyph_indices, vao) = unsafe {
+            // TODO: get rid of uv coordinates
             let vertices: [f32; 16] = [
                 0.0, 0.0, 0.0, 1.0, // bottom left
                 1.0, 0.0, 1.0, 1.0, // bottom right
@@ -150,6 +156,8 @@ impl Tile {
             texture: atlas.texture(),
             glyphs,
             num_instances: 1,
+            width: 0,
+            height: 0,
         }
     }
 
@@ -177,17 +185,46 @@ impl Tile {
         }
     }
 
-    pub fn setup_grid(&mut self, gl: &glow::Context, _size: &V2<u32>) {
+    pub fn setup_grid(&mut self, gl: &glow::Context, game: &Game) {
+        if self.width == 0 || self.height == 0 {
+            return;
+        }
+
         // let count = size.x * size.y;
         // self.num_instances = count as u32;
-        self.num_instances = 15;
+        self.num_instances = (game.width() * game.height()) as u32;
 
         let mut cell_rects: Vec<i32> = Vec::new();
         let mut glyph_indices: Vec<i32> = Vec::new();
 
-        for i in 0..self.num_instances as i32 {
-            cell_rects.extend_from_slice(&[10 + i * 90, 30, 90, 150]);
-            glyph_indices.push(i + 60);
+        let (gap, cell_size) = if self.width < self.height {
+            let gap = (self.width as f32 * Self::GAP) as i32;
+            (
+                gap,
+                ((self.width as f32 - gap as f32) / game.width() as f32) as i32
+                    - gap,
+            )
+        } else {
+            let gap = (self.height as f32 * Self::GAP) as i32;
+            (
+                gap,
+                ((self.height as f32 - gap as f32) / game.height() as f32)
+                    as i32
+                    - gap,
+            )
+        };
+
+        for y in 0..game.height() as i32 {
+            for x in 0..game.width() as i32 {
+                let r = [
+                    gap + x * (gap + cell_size),
+                    gap + y * (gap + cell_size),
+                    cell_size,
+                    cell_size,
+                ];
+                cell_rects.extend_from_slice(&r);
+                glyph_indices.push(65 + x + 4 * y);
+            }
         }
 
         unsafe {
@@ -211,6 +248,8 @@ impl Tile {
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
+        self.width = width;
+        self.height = height;
         unsafe {
             gl.use_program(Some(self.program));
             let loc = gl.get_uniform_location(self.program, "viewport");

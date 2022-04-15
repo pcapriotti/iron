@@ -1,7 +1,7 @@
 use anyhow::Result;
 use glow::HasContext;
 use rusttype::gpu_cache::{Cache, TextureCoords};
-use rusttype::{point, Font, PositionedGlyph, Rect, Scale};
+use rusttype::{point, Font, Point, PositionedGlyph, Rect, Scale};
 
 const MAIN_FONT_ID: usize = 0;
 
@@ -39,8 +39,32 @@ impl Atlas {
 }
 
 impl<'a> GlyphInfo<'a> {
-    pub fn write_to(&self, out: &mut Vec<u8>) {
+    pub fn write_to(&self, i: u32, out: &mut Vec<u8>) {
         let (uv_rect, rect) = self.coords;
+        let vmetrics = self.glyph.font().v_metrics(Scale {
+            x: Glyphs::SCALE,
+            y: Glyphs::SCALE,
+        });
+
+        let debug = i >= 65 && i <= 80;
+        if debug {
+            println!("glyph {}: {:?}", i, rect);
+        }
+
+        // scale rect and invert y
+        let rect = Rect {
+            min: Point {
+                x: rect.min.x as f32 / Glyphs::SCALE,
+                y: (-rect.min.y as f32 - vmetrics.descent) / Glyphs::SCALE,
+            },
+            max: Point {
+                x: rect.max.x as f32 / Glyphs::SCALE,
+                y: (-rect.max.y as f32 - vmetrics.descent) / Glyphs::SCALE,
+            },
+        };
+        if debug {
+            println!("{:?}", rect);
+        }
 
         fn write_rect<T>(rect: &Rect<T>, out: &mut Vec<u8>)
         where
@@ -62,12 +86,19 @@ impl<'a> GlyphInfo<'a> {
 impl Glyphs {
     const WIDTH: u32 = 1024;
     const HEIGHT: u32 = 1024;
+    const SCALE: f32 = 200.0;
 
     pub fn new() -> Result<Self> {
         let data = std::fs::read("/usr/share/fonts/TTF/Hack-Regular.ttf")?;
         let font: Font<'static> = Font::try_from_vec(data)
             .ok_or(anyhow::anyhow!("Error loading font"))?;
-        let scale = Scale { x: 200.0, y: 200.0 };
+        let scale = Scale {
+            x: Self::SCALE,
+            y: Self::SCALE,
+        };
+        println!("ascent: {}", font.v_metrics(scale).ascent);
+        println!("descent: {}", font.v_metrics(scale).descent);
+        println!("line gap: {}", font.v_metrics(scale).line_gap);
 
         // TODO: delete
         let mut cache = Cache::builder()
@@ -169,8 +200,8 @@ impl Glyphs {
             gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(ssbo));
             let data = {
                 let mut data = Vec::new();
-                for info in infos {
-                    info.write_to(&mut data);
+                for (i, info) in infos.iter().enumerate() {
+                    info.write_to(i as u32, &mut data);
                 }
                 data
             };

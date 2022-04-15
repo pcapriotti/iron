@@ -1,7 +1,9 @@
+mod game;
 mod glyphs;
 mod tile;
 mod v2;
 
+use game::Game;
 use glow::HasContext;
 use glutin::event::{Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
@@ -29,10 +31,10 @@ fn main() {
         ctx
     };
 
-    let size = V2::new(5, 5);
+    let mut game = Game::new(4, 4);
     let mut tile = {
         let mut tile = Tile::new(&gl);
-        tile.setup_grid(&gl, &size);
+        tile.setup_grid(&gl, &game);
         Some(tile)
     };
     eloop.run(move |e, _target, cf| {
@@ -60,6 +62,7 @@ fn main() {
                         if let Some(tile) = &mut tile {
                             // tile.set_scale(&gl, sz.width, sz.height, &size);
                             tile.resize(&gl, sz.width, sz.height);
+                            tile.setup_grid(&gl, &game);
                         }
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
