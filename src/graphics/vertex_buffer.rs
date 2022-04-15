@@ -1,12 +1,14 @@
 use glow::HasContext;
 
+#[derive(Clone, Copy)]
 pub enum Instancing {
     ByVertex,
     ByInstance,
 }
 
+#[derive(Clone)]
 pub struct VertexBuffer {
-    pub inner: glow::NativeBuffer,
+    inner: glow::NativeBuffer,
     pub size: i32,
     pub ty: u32,
     pub instancing: Instancing,
