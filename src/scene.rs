@@ -1,3 +1,4 @@
+use crate::animation::{Actuator, MoveActuator};
 use crate::game::{Game, Move};
 use crate::glyphs::Glyphs;
 use crate::layout::Layout;
@@ -26,7 +27,7 @@ impl Scene {
         gl: &glow::Context,
         layout: &Layout,
         game: &Game,
-        moves: &[Move],
+        moves: &Vec<Move>,
         time: f32,
     ) {
         // compute base tile positions and colours
@@ -59,22 +60,11 @@ impl Scene {
             })
             .collect::<Vec<_>>();
 
-        for mv in moves {
-            let src_point = (mv.src % layout.width, mv.src / layout.width);
-            let dst_point = (mv.dst % layout.width, mv.dst / layout.width);
-
-            let dx = ((dst_point.0 as f32 - src_point.0 as f32)
-                * layout.unit as f32
-                * (1.0 - time)) as i32;
-            let dy = ((dst_point.1 as f32 - src_point.1 as f32)
-                * layout.unit as f32
-                * (1.0 - time)) as i32;
-
-            if let Some(tile) = &mut fg[mv.dst] {
-                tile.rect[0] = (tile.rect[0] as i32 - dx) as u32;
-                tile.rect[1] = (tile.rect[1] as i32 - dy) as u32;
-            }
+        MoveActuator {
+            layout,
+            tiles: &mut fg,
         }
+        .actuate(moves, time);
 
         // collect all tiles
         let mut tiles = game

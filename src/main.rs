@@ -6,8 +6,8 @@ mod layout;
 mod scene;
 mod tiles;
 
-use animation::{Animation, MoveAnimation};
-use game::{Direction, Game};
+use animation::Animation;
+use game::{Direction, Game, Move};
 use glow::HasContext;
 use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
@@ -41,7 +41,7 @@ fn main() {
     let mut scene = Scene::new(&gl);
 
     let mut layout = Layout::compute(0, 0, game.width(), game.height());
-    let mut anim: Option<MoveAnimation> = None;
+    let mut anim: Option<Animation<Vec<Move>>> = None;
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::Wait;
@@ -50,14 +50,14 @@ fn main() {
                 scene.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
-                if let Some(MoveAnimation { animation, moves }) = &anim {
-                    let t = animation.time().min(1.0);
+                if let Some(a) = &anim {
+                    let t = a.time().min(1.0);
                     let done = t >= 1.0;
 
                     if done {
                         game.add_random_tile();
                     }
-                    scene.update(&gl, &layout, &game, moves, t);
+                    scene.update(&gl, &layout, &game, &a.inner, t);
                     win.window().request_redraw();
 
                     if done {
@@ -87,7 +87,7 @@ fn main() {
                             game.height(),
                         );
                         scene.resize(&gl, sz.width, sz.height);
-                        scene.update(&gl, &layout, &game, &[], 0.0);
+                        scene.update(&gl, &layout, &game, &Vec::new(), 0.0);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
@@ -108,20 +108,18 @@ fn main() {
                                 _ => None,
                             };
                             // do not accept moves while another one is being animated
-                            if anim.is_some() {
+                            if let Some(_) = anim {
                                 return;
                             }
                             if let Some(d) = dir {
                                 let moves = game.step(d);
                                 if !moves.is_empty() {
-                                    anim = Some(MoveAnimation {
-                                        animation: Animation::new(
-                                            Animation::DEFAULT_DURATION,
-                                        ),
-                                        moves: moves,
-                                    });
                                     win.window().request_redraw();
                                 }
+                                anim = Some(Animation::new(
+                                    animation::DEFAULT_DURATION,
+                                    moves,
+                                ));
                             }
                         }
                     }
