@@ -9,7 +9,7 @@ pub struct Animation<T> {
     pub result: Game,
 }
 
-pub const DEFAULT_DURATION: Duration = Duration::from_millis(2000);
+pub const DEFAULT_DURATION: Duration = Duration::from_millis(180);
 
 impl<T> Animation<T> {
     pub fn new(duration: Duration, inner: T, result: Game) -> Self {
