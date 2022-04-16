@@ -114,9 +114,6 @@ fn main() {
                             if let Some(d) = dir {
                                 let moves = game.step(d);
                                 if !moves.is_empty() {
-                                    scene.update(
-                                        &gl, &layout, &game, &moves, 0.0,
-                                    );
                                     anim = Some(MoveAnimation {
                                         animation: Animation::new(
                                             Animation::DEFAULT_DURATION,

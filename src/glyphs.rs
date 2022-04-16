@@ -1,9 +1,9 @@
-use crate::game::{Game, Move};
 use crate::graphics::util::rect;
 use crate::graphics::{
     GlyphCache, GlyphInfo, Instancing::*, Object, Quad, VertexBuffer,
 };
 use crate::layout::Layout;
+use crate::tiles::Tile;
 
 pub struct Glyphs {
     obj: Object,
@@ -14,8 +14,6 @@ pub struct Glyphs {
     cache: GlyphCache,
     infos: Vec<GlyphInfo<'static>>,
     num_instances: u32,
-    width: u32,
-    height: u32,
 }
 
 impl Glyphs {
@@ -48,8 +46,6 @@ impl Glyphs {
             cache,
             infos,
             num_instances: 0,
-            width: 0,
-            height: 0,
         }
     }
 
@@ -66,50 +62,54 @@ impl Glyphs {
         &mut self,
         gl: &glow::Context,
         layout: &Layout,
-        game: &Game,
-        moves: &[Move],
-        time: f32,
+        tiles: &[Tile],
     ) {
-        let mut cell_rects: Vec<i32> = Vec::new();
+        let mut cell_rects: Vec<u32> = Vec::new();
         let mut glyph_indices: Vec<u32> = Vec::new();
 
         let unit = (layout.unit as f32 * 0.28) as u32;
 
         let mut count = 0;
-        for ((x, y), value) in game.tiles() {
-            let value = format!("{}", 1 << value);
 
-            let mut x_offsets = Vec::new();
-            let mut text_width = 0;
-            for d in value.chars() {
-                let index = self.cache.index_of(d);
-                glyph_indices.push(index as u32);
+        for t in tiles {
+            if let Tile {
+                value: Some(value),
+                rect,
+                ..
+            } = t
+            {
+                // layout text
+                let value = format!("{}", 1 << value);
+                let mut x_offsets = Vec::new();
+                let mut text_width = 0;
+                for d in value.chars() {
+                    let index = self.cache.index_of(d);
+                    glyph_indices.push(index as u32);
 
-                x_offsets.push(text_width);
-                let width = {
-                    let glyph = self.infos[index].glyph().unpositioned();
-                    let width = glyph.h_metrics().advance_width;
-                    width / glyph.scale().x * unit as f32
-                };
-                text_width += width as u32;
-            }
+                    x_offsets.push(text_width);
+                    let width = {
+                        let glyph = self.infos[index].glyph().unpositioned();
+                        let width = glyph.h_metrics().advance_width;
+                        width / glyph.scale().x * unit as f32
+                    };
+                    text_width += width as u32;
+                }
 
-            let margin =
-                ((layout.unit - text_width) / 2, (layout.unit - unit) / 2);
+                let margin =
+                    ((layout.unit - text_width) / 2, (layout.unit - unit) / 2);
 
-            let (delta_x, delta_y) = layout.animate(moves, x, y, time);
+                for i in 0..value.len() {
+                    let x = rect[0] + margin.0 + x_offsets[i] - layout.gap;
+                    let y = rect[1] + margin.1 - layout.gap;
+                    cell_rects.extend_from_slice(&[
+                        x,
+                        y,
+                        unit as u32,
+                        unit as u32,
+                    ]);
+                }
 
-            for i in 0..value.len() {
-                let x = (layout.origin.0
-                    + x as u32 * layout.unit
-                    + margin.0
-                    + x_offsets[i]) as i32
-                    - delta_x;
-                let y = (layout.origin.1 + y as u32 * layout.unit + margin.1)
-                    as i32
-                    - delta_y;
-                cell_rects.extend_from_slice(&[x, y, unit as i32, unit as i32]);
-                count += 1;
+                count += value.len() as u32;
             }
         }
 
@@ -120,8 +120,6 @@ impl Glyphs {
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
-        self.width = width;
-        self.height = height;
         self.obj.program().set_uniform(
             gl,
             "viewport",

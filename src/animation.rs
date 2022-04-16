@@ -7,7 +7,7 @@ pub struct Animation {
 }
 
 impl Animation {
-    pub const DEFAULT_DURATION: Duration = Duration::from_millis(2000);
+    pub const DEFAULT_DURATION: Duration = Duration::from_millis(100);
 
     pub fn new(duration: Duration) -> Self {
         Animation {
@@ -25,4 +25,14 @@ impl Animation {
 pub struct MoveAnimation {
     pub animation: Animation,
     pub moves: Vec<Move>,
+}
+
+pub trait Actuator {
+    fn actuate(&self, time: f32);
+
+    fn finalise(&self) {
+        self.actuate(1.0);
+    }
+
+    fn cancel(&self) {}
 }

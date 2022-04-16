@@ -74,14 +74,6 @@ impl Game {
             .map(|(i, v)| ((i % self.width(), i / self.width()), v))
     }
 
-    pub fn tiles<'a>(
-        &'a self,
-    ) -> impl Iterator<Item = ((usize, usize), Value)> + 'a {
-        self.tiles.iter().enumerate().filter_map(|(i, v)| {
-            v.map(|v| ((i % self.width(), i / self.width()), v))
-        })
-    }
-
     pub fn step(&mut self, dir: Direction) -> Vec<Move> {
         let mut moves = Vec::new();
 
