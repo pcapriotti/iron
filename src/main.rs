@@ -31,7 +31,6 @@ fn main() {
         });
         ctx.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         ctx.enable(glow::BLEND);
-        ctx.enable(glow::DEPTH_TEST);
         ctx
     };
 
