@@ -22,11 +22,12 @@ pub enum Direction {
 pub struct Move {
     pub src: usize,
     pub dst: usize,
+    pub merge: bool,
 }
 
 impl Move {
-    fn new(src: usize, dst: usize) -> Move {
-        Move { src, dst }
+    fn new(src: usize, dst: usize, merge: bool) -> Move {
+        Move { src, dst, merge }
     }
 }
 
@@ -110,12 +111,12 @@ impl Game {
                         None => {
                             self.tiles[i1] = None;
                             self.tiles[i0] = Some(v);
-                            moves.push(Move::new(i1, i0));
+                            moves.push(Move::new(i1, i0, false));
                         }
                         Some(w) if w == v => {
                             self.tiles[i1] = None;
                             self.tiles[i0] = Some(v + 1);
-                            moves.push(Move::new(i1, i0));
+                            moves.push(Move::new(i1, i0, true));
                             y0 += 1;
                         }
                         Some(_) => {
@@ -124,7 +125,7 @@ impl Game {
                             if i0 != i1 {
                                 self.tiles[i1] = None;
                                 self.tiles[i0] = Some(v);
-                                moves.push(Move::new(i1, i0));
+                                moves.push(Move::new(i1, i0, false));
                             }
                         }
                     };
@@ -182,7 +183,7 @@ mod tests {
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
         assert_eq!(
-            vec![Move::new(4, 0), Move::new(9, 1)],
+            vec![Move::new(4, 0, false), Move::new(9, 1, false)],
             game.step(Direction::S)
         );
 
@@ -198,7 +199,7 @@ mod tests {
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
         assert_eq!(
-            vec![Move::new(4, 7), Move::new(9, 11)],
+            vec![Move::new(4, 7, false), Move::new(9, 11, false)],
             game.step(Direction::E)
         );
 
@@ -214,7 +215,7 @@ mod tests {
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
         assert_eq!(
-            vec![Move::new(4, 12), Move::new(9, 13)],
+            vec![Move::new(4, 12, false), Move::new(9, 13, false)],
             game.step(Direction::N)
         );
 
@@ -229,7 +230,7 @@ mod tests {
         let mut game = Game::new(4, 4);
         game.tiles[4] = Some(0);
         game.tiles[9] = Some(1);
-        assert_eq!(vec![Move::new(9, 8)], game.step(Direction::W));
+        assert_eq!(vec![Move::new(9, 8, false)], game.step(Direction::W));
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[4] = Some(0);
@@ -300,7 +301,14 @@ mod tests {
         game.tiles[5] = Some(1);
         game.tiles[9] = Some(1);
         game.tiles[13] = Some(1);
-        game.step(Direction::S);
+        assert_eq!(
+            vec![
+                Move::new(5, 1, true),
+                Move::new(9, 5, false),
+                Move::new(13, 5, true)
+            ],
+            game.step(Direction::S)
+        );
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[1] = Some(2);
