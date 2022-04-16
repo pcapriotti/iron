@@ -49,13 +49,18 @@ impl Game {
         self.height
     }
 
-    pub fn add_random_tile(&mut self) {
+    pub fn random_tile(&mut self) -> (usize, Value) {
         let empty_indices = (0..self.tiles.len())
             .filter(|i| self.tiles[*i].is_none())
             .collect::<Vec<_>>();
         let mut rng = rand::thread_rng();
         let index = empty_indices[rng.gen_range(0..empty_indices.len())];
         let value = if rng.gen_bool(0.1) { 2 } else { 1 };
+        (index, value)
+    }
+
+    pub fn add_random_tile(&mut self) {
+        let (index, value) = self.random_tile();
         self.tiles[index] = Some(value);
     }
 

@@ -53,10 +53,15 @@ fn main() {
             Event::RedrawRequested(_) => {
                 if let Some(MoveAnimation { animation, moves }) = &anim {
                     let t = animation.time().min(1.0);
+                    let done = t >= 1.0;
+
+                    if done {
+                        game.add_random_tile();
+                    }
                     scene.update(&gl, &layout, &game, moves, t);
                     win.window().request_redraw();
 
-                    if t >= 1.0 {
+                    if done {
                         anim = None;
                     }
                 }
@@ -110,7 +115,6 @@ fn main() {
                             if let Some(d) = dir {
                                 let moves = game.step(d);
                                 if !moves.is_empty() {
-                                    game.add_random_tile();
                                     scene.update(
                                         &gl, &layout, &game, &moves, 0.0,
                                     );
