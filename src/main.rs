@@ -3,6 +3,7 @@ mod game;
 mod glyphs;
 mod graphics;
 mod layout;
+mod scene;
 mod tiles;
 
 use animation::{Animation, MoveAnimation};
@@ -10,10 +11,9 @@ use game::{Direction, Game};
 use glow::HasContext;
 use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
-use glyphs::Glyphs;
 use layout::Layout;
+use scene::Scene;
 use std::time::Duration;
-use tiles::Tiles;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -40,8 +40,7 @@ fn main() {
     let mut game = Game::new(4, 4);
     game.add_random_tile();
 
-    let mut glyphs = Glyphs::new(&gl);
-    let mut tiles = Tiles::new(&gl);
+    let mut scene = Scene::new(&gl);
 
     let mut layout = Layout::compute(0, 0, game.width(), game.height());
     let mut anim: Option<MoveAnimation> = None;
@@ -50,14 +49,12 @@ fn main() {
         *cf = ControlFlow::Wait;
         match e {
             Event::LoopDestroyed => {
-                glyphs.cleanup(&gl);
-                tiles.cleanup(&gl);
+                scene.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
                 if let Some(MoveAnimation { animation, moves }) = &anim {
                     let t = animation.time().min(1.0);
-                    tiles.update(&gl, &layout, &game, moves, t);
-                    glyphs.update(&gl, &layout, &game, moves, t);
+                    scene.update(&gl, &layout, &game, moves, t);
                     win.window().request_redraw();
 
                     if t >= 1.0 {
@@ -67,8 +64,7 @@ fn main() {
                 unsafe {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
                     gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-                    tiles.render(&gl);
-                    glyphs.render(&gl);
+                    scene.render(&gl);
                 }
                 win.swap_buffers().unwrap();
             }
@@ -87,10 +83,8 @@ fn main() {
                             game.width(),
                             game.height(),
                         );
-                        tiles.resize(&gl, sz.width, sz.height);
-                        tiles.update(&gl, &layout, &game, &[], 0.0);
-                        glyphs.resize(&gl, sz.width, sz.height);
-                        glyphs.update(&gl, &layout, &game, &[], 0.0);
+                        scene.resize(&gl, sz.width, sz.height);
+                        scene.update(&gl, &layout, &game, &[], 0.0);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::KeyboardInput { input, .. } => {
@@ -118,10 +112,7 @@ fn main() {
                                 let moves = game.step(d);
                                 if !moves.is_empty() {
                                     game.add_random_tile();
-                                    tiles.update(
-                                        &gl, &layout, &game, &moves, 0.0,
-                                    );
-                                    glyphs.update(
+                                    scene.update(
                                         &gl, &layout, &game, &moves, 0.0,
                                     );
                                     anim = Some(MoveAnimation {
