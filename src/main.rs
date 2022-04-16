@@ -52,17 +52,14 @@ fn main() {
             Event::RedrawRequested(_) => {
                 if let Some(a) = &anim {
                     let t = a.time().min(1.0);
-                    let done = t >= 1.0;
-
-                    if done {
-                        game.add_random_tile();
+                    if t >= 1.0 {
+                        let a = anim.take().unwrap();
+                        game = a.result;
+                        scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
+                    } else {
+                        scene.update(&gl, &layout, &game, &a.inner, t);
                     }
-                    scene.update(&gl, &layout, &game, &a.inner, t);
                     win.window().request_redraw();
-
-                    if done {
-                        anim = None;
-                    }
                 }
                 unsafe {
                     gl.clear_color(0.148, 0.148, 0.148, 1.0);
@@ -112,10 +109,14 @@ fn main() {
                                 return;
                             }
                             if let Some(d) = dir {
-                                let moves = game.step(d);
+                                let mut game2 = game.clone();
+                                let moves = game2.step(d);
+                                game2.add_random_tile();
+
                                 anim = Some(Animation::new(
                                     animation::DEFAULT_DURATION,
                                     moves,
+                                    game2,
                                 ));
                                 win.window().request_redraw();
                             }

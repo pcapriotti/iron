@@ -1,4 +1,4 @@
-use crate::game::Move;
+use crate::game::{Game, Move};
 use crate::layout::Layout;
 use crate::tiles::Tile;
 use std::time::{Duration, Instant};
@@ -8,27 +8,24 @@ pub struct Animation<T> {
     start: Instant,
     duration: Duration,
     pub inner: T,
+    pub result: Game,
 }
 
-pub const DEFAULT_DURATION: Duration = Duration::from_millis(100);
+pub const DEFAULT_DURATION: Duration = Duration::from_millis(2000);
 
 impl<T> Animation<T> {
-    pub fn new(duration: Duration, inner: T) -> Self {
+    pub fn new(duration: Duration, inner: T, result: Game) -> Self {
         Self {
             start: Instant::now(),
             duration,
             inner,
+            result,
         }
     }
 
     pub fn time(&self) -> f32 {
         let now = Instant::now();
         (now - self.start).as_nanos() as f32 / self.duration.as_nanos() as f32
-    }
-
-    pub fn run<A: Actuator<T>>(&self, a: &mut A) {
-        let t = self.time();
-        a.actuate(&self.inner, t);
     }
 }
 
@@ -63,16 +60,16 @@ impl<'a> Actuator<Vec<Move>> for MoveActuator<'a> {
 
             let dx = ((dst_point.0 as f32 - src_point.0 as f32)
                 * self.layout.unit as f32
-                * (1.0 - time)) as i32;
+                * time) as i32;
             let dy = ((dst_point.1 as f32 - src_point.1 as f32)
                 * self.layout.unit as f32
-                * (1.0 - time)) as i32;
+                * time) as i32;
 
-            if let Some(tile) = &mut self.tiles[mv.dst] {
+            if let Some(tile) = &mut self.tiles[mv.src] {
                 tile.rect[0] =
-                    std::cmp::max(tile.rect[0] as i32 - dx, 0) as u32;
+                    std::cmp::max(tile.rect[0] as i32 + dx, 0) as u32;
                 tile.rect[1] =
-                    std::cmp::max(tile.rect[1] as i32 - dy, 0) as u32;
+                    std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
             }
         }
     }
