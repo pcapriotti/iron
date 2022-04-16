@@ -113,13 +113,11 @@ fn main() {
                             }
                             if let Some(d) = dir {
                                 let moves = game.step(d);
-                                if !moves.is_empty() {
-                                    win.window().request_redraw();
-                                }
                                 anim = Some(Animation::new(
                                     animation::DEFAULT_DURATION,
                                     moves,
                                 ));
+                                win.window().request_redraw();
                             }
                         }
                     }

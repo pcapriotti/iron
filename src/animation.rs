@@ -3,6 +3,7 @@ use crate::layout::Layout;
 use crate::tiles::Tile;
 use std::time::{Duration, Instant};
 
+#[derive(Debug)]
 pub struct Animation<T> {
     start: Instant,
     duration: Duration,
@@ -24,6 +25,17 @@ impl<T> Animation<T> {
         let now = Instant::now();
         (now - self.start).as_nanos() as f32 / self.duration.as_nanos() as f32
     }
+
+    pub fn run<A: Actuator<T>>(&self, a: &mut A) {
+        let t = self.time();
+        a.actuate(&self.inner, t);
+    }
+}
+
+pub struct Seq<T, U> {
+    pub a: T,
+    pub b: U,
+    pub alpha: f32,
 }
 
 pub trait Actuator<A> {
@@ -57,9 +69,31 @@ impl<'a> Actuator<Vec<Move>> for MoveActuator<'a> {
                 * (1.0 - time)) as i32;
 
             if let Some(tile) = &mut self.tiles[mv.dst] {
-                tile.rect[0] = (tile.rect[0] as i32 - dx) as u32;
-                tile.rect[1] = (tile.rect[1] as i32 - dy) as u32;
+                tile.rect[0] =
+                    std::cmp::max(tile.rect[0] as i32 - dx, 0) as u32;
+                tile.rect[1] =
+                    std::cmp::max(tile.rect[1] as i32 - dy, 0) as u32;
             }
+        }
+    }
+}
+
+pub struct SeqActuator<A, B> {
+    a: A,
+    b: B,
+}
+
+impl<A, B, T, U> Actuator<Seq<T, U>> for SeqActuator<A, B>
+where
+    A: Actuator<T>,
+    B: Actuator<U>,
+{
+    fn actuate(&mut self, seq: &Seq<T, U>, time: f32) {
+        if time <= seq.alpha {
+            self.a.actuate(&seq.a, time / seq.alpha);
+        } else {
+            self.b
+                .actuate(&seq.b, (time - seq.alpha) / (1.0 - seq.alpha));
         }
     }
 }
