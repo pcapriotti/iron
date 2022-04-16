@@ -1,3 +1,5 @@
+use crate::game::Move;
+
 pub struct Layout {
     /// Size of unit square, including margin.
     pub unit: u32,
@@ -36,5 +38,40 @@ impl Layout {
             width,
             height,
         }
+    }
+
+    pub fn animate(
+        &self,
+        moves: &[Move],
+        x: usize,
+        y: usize,
+        time: f32,
+    ) -> (i32, i32) {
+        if let Some(mv_index) =
+            moves.iter().position(|m| m.dst == x + y * self.width)
+        {
+            let mv = &moves[mv_index];
+
+            let src_point = (mv.src % self.width, mv.src / self.width);
+            let dst_point = (x, y);
+            let delta_x = ((dst_point.0 as f32 - src_point.0 as f32)
+                * self.unit as f32
+                * (1.0 - time)) as i32;
+            let delta_y = ((dst_point.1 as f32 - src_point.1 as f32)
+                * self.unit as f32
+                * (1.0 - time)) as i32;
+            (delta_x, delta_y)
+        } else {
+            (0, 0)
+        }
+    }
+
+    pub fn rect(&self, pos: (usize, usize)) -> [u32; 4] {
+        [
+            self.origin.0 + pos.0 as u32 * self.unit + self.gap,
+            self.origin.1 + pos.1 as u32 * self.unit + self.gap,
+            self.unit - 2 * self.gap,
+            self.unit - 2 * self.gap,
+        ]
     }
 }

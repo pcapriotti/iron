@@ -97,23 +97,7 @@ impl Glyphs {
             let margin =
                 ((layout.unit - text_width) / 2, (layout.unit - unit) / 2);
 
-            let (delta_x, delta_y) = if let Some(mv_index) =
-                moves.iter().position(|m| m.dst == x + y * game.width())
-            {
-                let mv = &moves[mv_index];
-
-                let src_point = (mv.src % game.width(), mv.src / game.width());
-                let dst_point = (x, y);
-                let delta_x = ((dst_point.0 as f32 - src_point.0 as f32)
-                    * layout.unit as f32
-                    * (1.0 - time)) as i32;
-                let delta_y = ((dst_point.1 as f32 - src_point.1 as f32)
-                    * layout.unit as f32
-                    * (1.0 - time)) as i32;
-                (delta_x, delta_y)
-            } else {
-                (0, 0)
-            };
+            let (delta_x, delta_y) = layout.animate(moves, x, y, time);
 
             for i in 0..value.len() {
                 let x = (layout.origin.0

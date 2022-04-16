@@ -13,7 +13,6 @@ use glutin::event::{ElementState, Event, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use layout::Layout;
 use scene::Scene;
-use std::time::Duration;
 
 fn main() {
     let eloop = glutin::event_loop::EventLoop::new();
@@ -117,7 +116,7 @@ fn main() {
                                     );
                                     anim = Some(MoveAnimation {
                                         animation: Animation::new(
-                                            Duration::from_millis(200),
+                                            Animation::DEFAULT_DURATION,
                                         ),
                                         moves: moves,
                                     });

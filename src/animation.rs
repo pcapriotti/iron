@@ -7,6 +7,8 @@ pub struct Animation {
 }
 
 impl Animation {
+    pub const DEFAULT_DURATION: Duration = Duration::from_millis(2000);
+
     pub fn new(duration: Duration) -> Self {
         Animation {
             start: Instant::now(),
