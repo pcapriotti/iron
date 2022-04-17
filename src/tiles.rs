@@ -37,7 +37,7 @@ impl Tiles {
         vertices.update(gl, glow::STATIC_DRAW);
         vao.add_buffer(gl, vertices);
 
-        let rects: VertexBuffer<u32> = VertexBuffer::new(gl, 4);
+        let rects: VertexBuffer<u32> = VertexBuffer::new(gl, 2);
         vao.add_buffer(gl, rects.clone());
 
         let mut ebo = ElementBuffer::new(gl);
@@ -93,11 +93,18 @@ impl Tiles {
         let mut count = 0;
 
         for tile in tiles {
-            // copy data for each vertex
             for _ in 0..4 {
                 self.colours.buffer.extend_from_slice(&tile.colour);
-                self.rects.buffer.extend_from_slice(&tile.rect);
             }
+
+            self.rects.buffer.push(tile.rect[0]);
+            self.rects.buffer.push(tile.rect[1]);
+            self.rects.buffer.push(tile.rect[0] + tile.rect[2]);
+            self.rects.buffer.push(tile.rect[1]);
+            self.rects.buffer.push(tile.rect[0]);
+            self.rects.buffer.push(tile.rect[1] + tile.rect[3]);
+            self.rects.buffer.push(tile.rect[0] + tile.rect[2]);
+            self.rects.buffer.push(tile.rect[1] + tile.rect[3]);
 
             count += 1;
         }
