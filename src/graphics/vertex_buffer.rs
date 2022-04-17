@@ -22,28 +22,20 @@ impl GL for f32 {
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum Instancing {
-    ByVertex,
-    ByInstance,
-}
-
 #[derive(Clone)]
 pub struct VertexBuffer<T> {
     pub inner: glow::NativeBuffer,
     pub size: i32,
-    pub instancing: Instancing,
     pub buffer: Vec<T>,
     phantom: std::marker::PhantomData<T>,
 }
 
 impl<T: GL> VertexBuffer<T> {
-    pub fn new(gl: &glow::Context, size: i32, instancing: Instancing) -> Self {
+    pub fn new(gl: &glow::Context, size: i32) -> Self {
         let vbo = unsafe { gl.create_buffer().unwrap() };
         Self {
             inner: vbo,
             size,
-            instancing,
             buffer: Vec::new(),
             phantom: std::marker::PhantomData,
         }
@@ -66,9 +58,6 @@ impl<T: GL> VertexBuffer<T> {
                 ),
                 _ => panic!("Unsupported VertexBuffer type {}", T::ty()),
             };
-            if let Instancing::ByInstance = self.instancing {
-                gl.vertex_attrib_divisor(i, 1);
-            }
             gl.enable_vertex_attrib_array(i);
         }
     }

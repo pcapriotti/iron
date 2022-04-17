@@ -1,11 +1,10 @@
-#version 430 core
+#version 330 core
 layout (location = 0) in vec2 p;
 layout (location = 1) in ivec4 rect;
 layout (location = 2) in vec3 colour;
 
 out vec3 frag_col;
 out vec2 uv;
-flat out ivec4 cell_rect;
 uniform ivec4 viewport;
 
 void main() {

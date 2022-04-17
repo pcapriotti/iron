@@ -1,6 +1,7 @@
 use crate::graphics::util::rect;
 use crate::graphics::{
-    GlyphCache, GlyphInfo, Instancing::*, Object, Quad, VertexBuffer,
+    quad, ElementBuffer, GlyphCache, GlyphInfo, Object, Program, VertexArray,
+    VertexBuffer,
 };
 use crate::layout::Layout;
 use crate::tiles::Tile;
@@ -10,42 +11,66 @@ pub struct Glyphs {
 
     cell_rects: VertexBuffer<u32>,
     glyph_indices: VertexBuffer<u32>,
+    num_instances: u32,
 
     cache: GlyphCache,
     infos: Vec<GlyphInfo<'static>>,
-    num_instances: u32,
 }
 
 impl Glyphs {
-    pub fn new(gl: &glow::Context) -> Self {
-        let mut quad = Quad::new(
+    pub fn new(gl: &glow::Context, max_glyphs: usize) -> Self {
+        let mut vao = VertexArray::new(gl);
+
+        let program = Program::new(
             gl,
             include_bytes!("../shaders/glyph.v.glsl"),
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
+        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl, 2);
+        for _ in 0..max_glyphs {
+            vertices.buffer.extend_from_slice(&quad::VERTICES);
+        }
+        vertices.update(gl, glow::STATIC_DRAW);
+        vertices.buffer.truncate(0);
+        vao.add_buffer(gl, vertices);
+
+        let mut ebo = ElementBuffer::new(gl);
+        let mut ebo_buffer = Vec::new();
+        for i in 0..max_glyphs as u32 {
+            ebo_buffer.extend_from_slice(&[
+                i * 4,
+                1 + i * 4,
+                2 + i * 4,
+                2 + i * 4,
+                1 + i * 4,
+                3 + i * 4,
+            ]);
+        }
+        ebo.set_data(gl, &ebo_buffer);
+
         // cell rects
-        let cell_rects = VertexBuffer::new(gl, 4, ByInstance);
+        let cell_rects = VertexBuffer::new(gl, 4);
 
         // glyph indices
-        let glyph_indices = VertexBuffer::new(gl, 1, ByInstance);
+        let glyph_indices = VertexBuffer::new(gl, 1);
 
-        quad.vao.add_buffer(gl, cell_rects.clone());
-        quad.vao.add_buffer(gl, glyph_indices.clone());
+        vao.add_buffer(gl, cell_rects.clone());
+        vao.add_buffer(gl, glyph_indices.clone());
 
         let mut cache = GlyphCache::new(gl, 0);
         let (infos, texture) = cache.make_atlas(gl);
         cache.upload_atlas(gl, &texture.bind(gl));
 
-        let obj = quad.into_object(Some(texture));
+        let obj = Object::new(vao, ebo, Some(texture), program);
 
         Self {
             obj,
             cell_rects,
             glyph_indices,
+            num_instances: 0,
             cache,
             infos,
-            num_instances: 0,
         }
     }
 
@@ -66,7 +91,6 @@ impl Glyphs {
     ) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
-
         let mut count = 0;
 
         for t in tiles {
@@ -93,7 +117,9 @@ impl Glyphs {
                 let mut text_width = 0;
                 for d in value.chars() {
                     let index = self.cache.index_of(d);
-                    self.glyph_indices.buffer.push(index as u32);
+                    for _ in 0..4 {
+                        self.glyph_indices.buffer.push(index as u32);
+                    }
 
                     x_offsets.push(text_width);
                     let width = {
@@ -113,21 +139,22 @@ impl Glyphs {
                 for i in 0..value.len() {
                     let x = rect[0] + margin.0 + x_offsets[i] - layout.gap;
                     let y = rect[1] + margin.1 - layout.gap;
-                    self.cell_rects.buffer.extend_from_slice(&[
-                        x,
-                        y,
-                        unit as u32,
-                        unit as u32,
-                    ]);
+                    for _ in 0..4 {
+                        self.cell_rects.buffer.extend_from_slice(&[
+                            x,
+                            y,
+                            unit as u32,
+                            unit as u32,
+                        ]);
+                    }
+                    count += 1;
                 }
-
-                count += value.len() as u32;
             }
         }
 
-        self.num_instances = count;
         self.cell_rects.update(gl, glow::STATIC_DRAW);
         self.glyph_indices.update(gl, glow::STATIC_DRAW);
+        self.num_instances = count;
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {

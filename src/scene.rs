@@ -9,10 +9,10 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(gl: &glow::Context) -> Scene {
+    pub fn new(gl: &glow::Context, width: usize, height: usize) -> Scene {
         Scene {
-            tiles: Tiles::new(gl),
-            glyphs: Glyphs::new(gl),
+            tiles: Tiles::new(gl, width * height * 3),
+            glyphs: Glyphs::new(gl, width * height * 10),
         }
     }
 

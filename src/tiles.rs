@@ -1,6 +1,8 @@
 use crate::game::Value;
 use crate::graphics::util::rect;
-use crate::graphics::{Instancing::*, Object, Quad, VertexBuffer};
+use crate::graphics::{
+    quad, ElementBuffer, Object, Program, VertexArray, VertexBuffer,
+};
 use crate::layout::Layout;
 
 pub struct Tiles {
@@ -19,21 +21,45 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(gl: &glow::Context) -> Self {
-        let mut quad = Quad::new(
+    pub fn new(gl: &glow::Context, max_tiles: usize) -> Self {
+        let program = Program::new(
             gl,
             include_bytes!("../shaders/tile.v.glsl"),
             include_bytes!("../shaders/tile.f.glsl"),
         );
+        let mut vao = VertexArray::new(gl);
 
-        let rects = VertexBuffer::new(gl, 4, ByInstance);
-        quad.vao.add_buffer(gl, rects.clone());
+        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl, 2);
+        // prefill vertices
+        for _ in 0..max_tiles {
+            vertices.buffer.extend_from_slice(&quad::VERTICES);
+        }
+        vertices.update(gl, glow::STATIC_DRAW);
+        vao.add_buffer(gl, vertices);
 
-        let colours = VertexBuffer::new(gl, 3, ByInstance);
-        quad.vao.add_buffer(gl, colours.clone());
+        let rects: VertexBuffer<u32> = VertexBuffer::new(gl, 4);
+        vao.add_buffer(gl, rects.clone());
+
+        let mut ebo = ElementBuffer::new(gl);
+        let mut ebo_buffer = Vec::new();
+        // prefill indices
+        for i in 0..max_tiles as u32 {
+            ebo_buffer.extend_from_slice(&[
+                i * 4,
+                1 + i * 4,
+                2 + i * 4,
+                2 + i * 4,
+                1 + i * 4,
+                3 + i * 4,
+            ]);
+        }
+        ebo.set_data(gl, &ebo_buffer[..]);
+
+        let colours = VertexBuffer::new(gl, 3);
+        vao.add_buffer(gl, colours.clone());
 
         Tiles {
-            obj: quad.into_object(None),
+            obj: Object::new(vao, ebo, None, program),
             rects,
             colours,
             num_instances: 0,
@@ -64,15 +90,20 @@ impl Tiles {
     ) {
         self.rects.buffer.truncate(0);
         self.colours.buffer.truncate(0);
+        let mut count = 0;
 
         for tile in tiles {
-            self.colours.buffer.extend_from_slice(&tile.colour);
-            self.rects.buffer.extend_from_slice(&tile.rect);
+            // copy data for each vertex
+            for _ in 0..4 {
+                self.colours.buffer.extend_from_slice(&tile.colour);
+                self.rects.buffer.extend_from_slice(&tile.rect);
+            }
+
+            count += 1;
         }
 
         self.rects.update(gl, glow::STATIC_DRAW);
         self.colours.update(gl, glow::STATIC_DRAW);
-
-        self.num_instances = tiles.len() as u32;
+        self.num_instances = count;
     }
 }

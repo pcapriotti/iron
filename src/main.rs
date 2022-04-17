@@ -46,7 +46,7 @@ fn main() {
     let mut game = Game::new(4, 4);
     game.add_random_tile();
 
-    let mut scene = Scene::new(&gl);
+    let mut scene = Scene::new(&gl, game.width(), game.height());
 
     let mut layout = Layout::compute(
         INITIAL_SIZE.0,

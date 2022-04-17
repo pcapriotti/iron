@@ -2,7 +2,6 @@
 
 in vec2 uv;
 in vec3 frag_col;
-flat in ivec4 cell_rect;
 
 out vec4 col;
 

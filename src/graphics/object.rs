@@ -35,17 +35,16 @@ impl Object {
         }
     }
 
-    pub unsafe fn render(&self, gl: &glow::Context, num_instances: u32) {
+    pub unsafe fn render(&self, gl: &glow::Context, num: u32) {
         gl.use_program(Some(self.program.inner));
         gl.bind_vertex_array(Some(self.vao.inner));
         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
         let _btex = self.texture.as_ref().map(|t| t.bind(gl));
-        gl.draw_elements_instanced(
+        gl.draw_elements(
             glow::TRIANGLES,
-            self.ebo.size as i32,
+            num as i32 * 6,
             glow::UNSIGNED_INT,
             0,
-            num_instances as i32,
         );
         gl.bind_vertex_array(None);
         gl.use_program(None);
