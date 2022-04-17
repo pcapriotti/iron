@@ -8,8 +8,8 @@ use crate::tiles::Tile;
 pub struct Glyphs {
     obj: Object,
 
-    cell_rects: VertexBuffer<i32>,
-    glyph_indices: VertexBuffer<i32>,
+    cell_rects: VertexBuffer<u32>,
+    glyph_indices: VertexBuffer<u32>,
 
     cache: GlyphCache,
     infos: Vec<GlyphInfo<'static>>,
@@ -64,8 +64,8 @@ impl Glyphs {
         layout: &Layout,
         tiles: &[Tile],
     ) {
-        let mut cell_rects: Vec<u32> = Vec::new();
-        let mut glyph_indices: Vec<u32> = Vec::new();
+        self.cell_rects.buffer.truncate(0);
+        self.glyph_indices.buffer.truncate(0);
 
         let unit = (layout.unit as f32 * 0.28) as u32;
 
@@ -84,7 +84,7 @@ impl Glyphs {
                 let mut text_width = 0;
                 for d in value.chars() {
                     let index = self.cache.index_of(d);
-                    glyph_indices.push(index as u32);
+                    self.glyph_indices.buffer.push(index as u32);
 
                     x_offsets.push(text_width);
                     let width = {
@@ -101,7 +101,7 @@ impl Glyphs {
                 for i in 0..value.len() {
                     let x = rect[0] + margin.0 + x_offsets[i] - layout.gap;
                     let y = rect[1] + margin.1 - layout.gap;
-                    cell_rects.extend_from_slice(&[
+                    self.cell_rects.buffer.extend_from_slice(&[
                         x,
                         y,
                         unit as u32,
@@ -114,9 +114,8 @@ impl Glyphs {
         }
 
         self.num_instances = count;
-        self.cell_rects.set_data(gl, &cell_rects, glow::STATIC_DRAW);
-        self.glyph_indices
-            .set_data(gl, &glyph_indices, glow::STATIC_DRAW);
+        self.cell_rects.update(gl, glow::STATIC_DRAW);
+        self.glyph_indices.update(gl, glow::STATIC_DRAW);
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {

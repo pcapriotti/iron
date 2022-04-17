@@ -1,6 +1,6 @@
 use glow::HasContext;
 
-pub trait GL {
+pub trait GL: bytemuck::Pod {
     fn ty() -> u32;
 }
 
@@ -33,6 +33,7 @@ pub struct VertexBuffer<T> {
     pub inner: glow::NativeBuffer,
     pub size: i32,
     pub instancing: Instancing,
+    pub buffer: Vec<T>,
     phantom: std::marker::PhantomData<T>,
 }
 
@@ -43,6 +44,7 @@ impl<T: GL> VertexBuffer<T> {
             inner: vbo,
             size,
             instancing,
+            buffer: Vec::new(),
             phantom: std::marker::PhantomData,
         }
     }
@@ -71,17 +73,12 @@ impl<T: GL> VertexBuffer<T> {
         }
     }
 
-    pub fn set_data(
-        &mut self,
-        gl: &glow::Context,
-        data: &[impl bytemuck::Pod],
-        usage: u32,
-    ) {
+    pub fn update(&mut self, gl: &glow::Context, usage: u32) {
         unsafe {
             gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner));
             gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
-                bytemuck::cast_slice(data),
+                bytemuck::cast_slice(&self.buffer),
                 usage,
             );
             gl.bind_buffer(glow::ARRAY_BUFFER, None);

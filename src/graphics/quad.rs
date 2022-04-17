@@ -25,7 +25,11 @@ impl Quad {
     pub fn new(gl: &glow::Context, vert: &[u8], frag: &[u8]) -> Self {
         let program = Program::new(gl, vert, frag);
         let mut vbo: VertexBuffer<f32> = VertexBuffer::new(gl, 2, ByVertex);
-        vbo.set_data(gl, &VERTICES, glow::STATIC_DRAW);
+
+        vbo.buffer.extend_from_slice(&VERTICES);
+        vbo.update(gl, glow::STATIC_DRAW);
+        vbo.buffer.truncate(0);
+
         let mut vao = VertexArray::new(gl);
         vao.add_buffer(gl, vbo);
         let mut ebo = ElementBuffer::new(gl);

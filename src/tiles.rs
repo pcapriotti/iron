@@ -62,16 +62,17 @@ impl Tiles {
         _layout: &Layout,
         tiles: &[Tile],
     ) {
-        let mut rects: Vec<u32> = Vec::new();
-        let mut colours: Vec<f32> = Vec::new();
+        self.rects.buffer.truncate(0);
+        self.colours.buffer.truncate(0);
 
         for tile in tiles {
-            colours.extend_from_slice(&tile.colour);
-            rects.extend_from_slice(&tile.rect);
+            self.colours.buffer.extend_from_slice(&tile.colour);
+            self.rects.buffer.extend_from_slice(&tile.rect);
         }
 
-        self.rects.set_data(gl, &rects, glow::STATIC_DRAW);
-        self.colours.set_data(gl, &colours, glow::STATIC_DRAW);
+        self.rects.update(gl, glow::STATIC_DRAW);
+        self.colours.update(gl, glow::STATIC_DRAW);
+
         self.num_instances = tiles.len() as u32;
     }
 }
