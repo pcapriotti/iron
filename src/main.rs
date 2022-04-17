@@ -17,6 +17,9 @@ use scene::Scene;
 const INITIAL_SIZE: (u32, u32) = (800, 600);
 
 fn main() {
+    // TODO: figure out why rendering on wayland is broken
+    std::env::set_var("WAYLAND_DISPLAY", "");
+
     let eloop = glutin::event_loop::EventLoop::new();
     let wb = glutin::window::WindowBuilder::new()
         .with_title("Iron")
