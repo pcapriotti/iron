@@ -42,7 +42,6 @@ fn main() {
         ctx
     };
 
-    // init a game state
     let mut game = Game::new(4, 4);
     game.add_random_tile();
 
