@@ -5,8 +5,8 @@ use crate::layout::Layout;
 
 pub struct Tiles {
     obj: Object,
-    rects: VertexBuffer,
-    colours: VertexBuffer,
+    rects: VertexBuffer<u32>,
+    colours: VertexBuffer<f32>,
     num_instances: u32,
 }
 
@@ -26,10 +26,10 @@ impl Tiles {
             include_bytes!("../shaders/tile.f.glsl"),
         );
 
-        let rects = VertexBuffer::new(gl, 4, glow::INT, ByInstance);
+        let rects = VertexBuffer::new(gl, 4, ByInstance);
         quad.vao.add_buffer(gl, rects.clone());
 
-        let colours = VertexBuffer::new(gl, 3, glow::FLOAT, ByInstance);
+        let colours = VertexBuffer::new(gl, 3, ByInstance);
         quad.vao.add_buffer(gl, colours.clone());
 
         Tiles {

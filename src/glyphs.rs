@@ -8,8 +8,8 @@ use crate::tiles::Tile;
 pub struct Glyphs {
     obj: Object,
 
-    cell_rects: VertexBuffer,
-    glyph_indices: VertexBuffer,
+    cell_rects: VertexBuffer<i32>,
+    glyph_indices: VertexBuffer<i32>,
 
     cache: GlyphCache,
     infos: Vec<GlyphInfo<'static>>,
@@ -25,10 +25,10 @@ impl Glyphs {
         );
 
         // cell rects
-        let cell_rects = VertexBuffer::new(gl, 4, glow::INT, ByInstance);
+        let cell_rects = VertexBuffer::new(gl, 4, ByInstance);
 
         // glyph indices
-        let glyph_indices = VertexBuffer::new(gl, 1, glow::INT, ByInstance);
+        let glyph_indices = VertexBuffer::new(gl, 1, ByInstance);
 
         quad.vao.add_buffer(gl, cell_rects.clone());
         quad.vao.add_buffer(gl, glyph_indices.clone());

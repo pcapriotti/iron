@@ -24,7 +24,7 @@ const INDICES: [u32; 6] = [
 impl Quad {
     pub fn new(gl: &glow::Context, vert: &[u8], frag: &[u8]) -> Self {
         let program = Program::new(gl, vert, frag);
-        let mut vbo = VertexBuffer::new(gl, 2, glow::FLOAT, ByVertex);
+        let mut vbo: VertexBuffer<f32> = VertexBuffer::new(gl, 2, ByVertex);
         vbo.set_data(gl, &VERTICES, glow::STATIC_DRAW);
         let mut vao = VertexArray::new(gl);
         vao.add_buffer(gl, vbo);

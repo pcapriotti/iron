@@ -1,9 +1,9 @@
-use super::vertex_buffer::VertexBuffer;
+use super::vertex_buffer::{VertexBuffer, GL};
 use glow::HasContext;
 
 pub struct VertexArray {
     pub inner: glow::NativeVertexArray,
-    buffers: Vec<VertexBuffer>,
+    buffers: Vec<glow::NativeBuffer>,
 }
 
 impl VertexArray {
@@ -16,16 +16,20 @@ impl VertexArray {
         }
     }
 
-    pub fn add_buffer(&mut self, gl: &glow::Context, buffer: VertexBuffer) {
+    pub fn add_buffer<T: GL>(
+        &mut self,
+        gl: &glow::Context,
+        buffer: VertexBuffer<T>,
+    ) {
         unsafe { gl.bind_vertex_array(Some(self.inner)) };
         buffer.enable(gl, self.buffers.len() as u32);
-        self.buffers.push(buffer);
+        self.buffers.push(buffer.inner);
         unsafe { gl.bind_buffer(glow::ARRAY_BUFFER, None) };
     }
 
     pub fn cleanup(&mut self, gl: &glow::Context) {
-        for buffer in self.buffers.iter_mut() {
-            buffer.cleanup(gl);
+        for buf in &self.buffers {
+            unsafe { gl.delete_buffer(*buf) }
         }
     }
 }
