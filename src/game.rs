@@ -308,4 +308,19 @@ mod tests {
 
         assert_eq!(game, game2);
     }
+
+    #[test]
+    fn test_merge_far() {
+        let mut game = Game::new(4, 4);
+        game.tiles[4] = Some(1);
+        game.tiles[5] = Some(1);
+        assert_eq!(
+            vec![Move::new(5, 7, false), Move::new(4, 7, true)],
+            game.step(Direction::E)
+        );
+
+        let mut game2 = Game::new(4, 4);
+        game2.tiles[7] = Some(2);
+        assert_eq!(game, game2);
+    }
 }

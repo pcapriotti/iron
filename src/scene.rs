@@ -81,7 +81,7 @@ impl Scene {
                     std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
             }
             if mv.merge {
-                for t in fg[mv.dst].take() {
+                for t in fg[mv.src].take() {
                     merged.push(t);
                 }
             }
