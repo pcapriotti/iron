@@ -55,6 +55,7 @@ fn main() {
     let mut modifiers = ModifiersState::empty();
 
     scene.update(&gl, &layout, &game, &Vec::new(), 0.0);
+    win.window().request_redraw();
 
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::Wait;

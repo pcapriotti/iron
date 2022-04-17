@@ -48,7 +48,7 @@ pub struct GlyphCache {
 impl GlyphCache {
     const WIDTH: u32 = 1024;
     const HEIGHT: u32 = 1024;
-    const SCALE: f32 = 80.0;
+    const SCALE: f32 = 100.0;
 
     pub fn new(gl: &glow::Context, index: u32) -> Self {
         let data = std::fs::read("/usr/share/fonts/TTF/Hack-Regular.ttf")

@@ -67,8 +67,6 @@ impl Glyphs {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
 
-        let unit = (layout.unit as f32 * 0.28) as u32;
-
         let mut count = 0;
 
         for t in tiles {
@@ -78,8 +76,19 @@ impl Glyphs {
                 ..
             } = t
             {
+                let value = format!("{}", (1 as u64) << value);
+                let scale = if value.len() <= 4 {
+                    0.4
+                } else if value.len() <= 6 {
+                    0.28
+                } else if value.len() <= 8 {
+                    0.21
+                } else {
+                    0.15
+                };
+                let unit = (layout.unit as f32 * scale) as u32;
+
                 // layout text
-                let value = format!("{}", 1 << value);
                 let mut x_offsets = Vec::new();
                 let mut text_width = 0;
                 for d in value.chars() {
@@ -95,8 +104,11 @@ impl Glyphs {
                     text_width += width as u32;
                 }
 
-                let margin =
-                    ((layout.unit - text_width) / 2, (layout.unit - unit) / 2);
+                let margin = (
+                    ((layout.unit as i32 - text_width as i32) / 2).max(0)
+                        as u32,
+                    (layout.unit - unit) / 2,
+                );
 
                 for i in 0..value.len() {
                     let x = rect[0] + margin.0 + x_offsets[i] - layout.gap;

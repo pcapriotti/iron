@@ -6,7 +6,7 @@ flat in ivec4 cell_rect;
 
 out vec4 col;
 
-float radius = 0.05;
+float radius = 0.03;
 
 // sdf of a rectangle of half-dimensions dim, centered at p0
 float sdf(vec2 p0, vec2 dim, vec2 p) {
