@@ -61,29 +61,15 @@ fn main() {
     win.window().request_redraw();
 
     eloop.run(move |e, _target, cf| {
-        *cf = ControlFlow::Wait;
+        *cf = ControlFlow::Poll;
         match e {
             Event::LoopDestroyed => {
                 scene.cleanup(&gl);
             }
             Event::RedrawRequested(_) => {
-                if let Some(a) = &anim {
-                    let t = a.time().min(1.0);
-                    if t >= 1.0 {
-                        let a = anim.take().unwrap();
-                        game = a.result;
-                        scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
-                    } else {
-                        scene.update(&gl, &layout, &game, &a.inner, t);
-                    }
-                    win.window().request_redraw();
-                }
                 unsafe {
-                    gl.clear_color(0.148, 0.148, 0.148, 1.0);
-                    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-                    scene.render(&gl);
-                }
-                win.swap_buffers().unwrap();
+                    render(&gl, &layout, &mut scene, &mut anim, &mut game, &win)
+                };
             }
             Event::WindowEvent { event: ref e, .. } => {
                 use glutin::event::WindowEvent;
@@ -152,4 +138,40 @@ fn main() {
             _ => {}
         }
     });
+}
+
+unsafe fn render(
+    gl: &glow::Context,
+    layout: &Layout,
+    scene: &mut Scene,
+    anim: &mut Option<Animation<Vec<Move>>>,
+    game: &mut Game,
+    win: &glutin::ContextWrapper<
+        glutin::PossiblyCurrent,
+        glutin::window::Window,
+    >,
+) {
+    use std::time::Instant;
+
+    let start = Instant::now();
+
+    if let Some(a) = &anim {
+        let t = a.time().min(1.0);
+        if t >= 1.0 {
+            let a = anim.take().unwrap();
+            *game = a.result;
+            scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
+        } else {
+            scene.update(&gl, &layout, &game, &a.inner, t);
+        }
+        win.window().request_redraw();
+    }
+    gl.clear_color(0.148, 0.148, 0.148, 1.0);
+    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+    scene.render(&gl);
+
+    if cfg!(feature = "debug") {
+        println!("{} us", (Instant::now() - start).as_micros());
+    }
+    win.swap_buffers().unwrap();
 }
