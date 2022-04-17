@@ -104,22 +104,22 @@ impl Scene {
         }
 
         // render tiles
-        self.tiles.update(gl, layout, &tiles);
+        self.tiles.update(gl, &tiles);
         unsafe {
             self.tiles.render(gl);
         }
-        self.glyphs.update(gl, layout, &tiles);
+        self.glyphs.update(gl, &tiles);
         unsafe {
             self.glyphs.render(gl);
         }
 
         // render merged tiles later
         if !merged.is_empty() {
-            self.tiles.update(gl, layout, &merged);
+            self.tiles.update(gl, &merged);
             unsafe {
                 self.tiles.render(gl);
             }
-            self.glyphs.update(gl, layout, &merged);
+            self.glyphs.update(gl, &merged);
             unsafe {
                 self.glyphs.render(gl);
             }

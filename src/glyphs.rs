@@ -3,7 +3,6 @@ use crate::graphics::{
     quad, ElementBuffer, GlyphCache, GlyphInfo, Object, Program, VertexArray,
     VertexBuffer,
 };
-use crate::layout::Layout;
 use crate::tiles::Tile;
 
 pub struct Glyphs {
@@ -83,12 +82,7 @@ impl Glyphs {
         self.obj.render(gl, self.num_instances);
     }
 
-    pub fn update(
-        &mut self,
-        gl: &glow::Context,
-        layout: &Layout,
-        tiles: &[Tile],
-    ) {
+    pub fn update(&mut self, gl: &glow::Context, tiles: &[Tile]) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
         let mut count = 0;
@@ -110,7 +104,7 @@ impl Glyphs {
                 } else {
                     0.15
                 };
-                let unit = (layout.unit as f32 * scale) as u32;
+                let unit = (t.rect[2] as f32 * scale) as u32;
 
                 // layout text
                 let mut x_offsets = Vec::new();
@@ -131,14 +125,13 @@ impl Glyphs {
                 }
 
                 let margin = (
-                    ((layout.unit as i32 - text_width as i32) / 2).max(0)
-                        as u32,
-                    (layout.unit - unit) / 2,
+                    ((t.rect[2] as i32 - text_width as i32) / 2).max(0) as u32,
+                    (t.rect[3] - unit) / 2,
                 );
 
                 for i in 0..value.len() {
-                    let x = rect[0] + margin.0 + x_offsets[i] - layout.gap;
-                    let y = rect[1] + margin.1 - layout.gap;
+                    let x = rect[0] + margin.0 + x_offsets[i];
+                    let y = rect[1] + margin.1;
                     for _ in 0..4 {
                         self.cell_rects.buffer.extend_from_slice(&[
                             x,

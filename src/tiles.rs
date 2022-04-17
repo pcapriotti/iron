@@ -3,7 +3,6 @@ use crate::graphics::util::rect;
 use crate::graphics::{
     quad, ElementBuffer, Object, Program, VertexArray, VertexBuffer,
 };
-use crate::layout::Layout;
 
 pub struct Tiles {
     obj: Object,
@@ -82,12 +81,7 @@ impl Tiles {
         );
     }
 
-    pub fn update(
-        &mut self,
-        gl: &glow::Context,
-        _layout: &Layout,
-        tiles: &[Tile],
-    ) {
+    pub fn update(&mut self, gl: &glow::Context, tiles: &[Tile]) {
         self.rects.buffer.truncate(0);
         self.colours.buffer.truncate(0);
         let mut count = 0;
