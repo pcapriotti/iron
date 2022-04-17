@@ -51,7 +51,7 @@ impl GlyphCache {
     const SCALE: f32 = 100.0;
 
     pub fn new(gl: &glow::Context, index: u32) -> Self {
-        let data = std::fs::read("/usr/share/fonts/TTF/Hack-Regular.ttf")
+        let data = std::fs::read("/usr/share/fonts/TTF/Hack-Bold.ttf")
             .expect("Could not read font");
         let font: Font<'static> =
             Font::try_from_vec(data).expect("Error loading font");
