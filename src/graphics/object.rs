@@ -36,6 +36,9 @@ impl Object {
     }
 
     pub unsafe fn render(&self, gl: &glow::Context, num: u32) {
+        if num <= 0 {
+            return;
+        };
         gl.use_program(Some(self.program.inner));
         gl.bind_vertex_array(Some(self.vao.inner));
         gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));

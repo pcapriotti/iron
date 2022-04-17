@@ -56,7 +56,6 @@ fn main() {
     let mut anim: Option<Animation<Vec<Move>>> = None;
     let mut modifiers = ModifiersState::empty();
 
-    scene.update(&gl, &layout, &game, &Vec::new(), 0.0);
     win.window().request_redraw();
 
     eloop.run(move |e, _target, cf| {
@@ -86,7 +85,6 @@ fn main() {
                             game.height(),
                         );
                         scene.resize(&gl, sz.width, sz.height);
-                        scene.update(&gl, &layout, &game, &Vec::new(), 0.0);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::ModifiersChanged(s) => {
@@ -154,6 +152,8 @@ unsafe fn render(
 
     let start = Instant::now();
 
+    gl.clear_color(0.148, 0.148, 0.148, 1.0);
+    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
     if let Some(a) = &anim {
         let t = a.time().min(1.0);
         if t >= 1.0 {
@@ -164,10 +164,9 @@ unsafe fn render(
             scene.update(&gl, &layout, &game, &a.inner, t);
         }
         win.window().request_redraw();
+    } else {
+        scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
     }
-    gl.clear_color(0.148, 0.148, 0.148, 1.0);
-    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
-    scene.render(&gl);
 
     if cfg!(feature = "debug") {
         println!("{} us", (Instant::now() - start).as_micros());

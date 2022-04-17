@@ -61,6 +61,8 @@ impl Scene {
             })
             .collect::<Vec<_>>();
 
+        let mut merged = Vec::new();
+
         for mv in moves.iter() {
             let src_point = (mv.src % layout.width, mv.src / layout.width);
             let dst_point = (mv.dst % layout.width, mv.dst / layout.width);
@@ -77,6 +79,11 @@ impl Scene {
                     std::cmp::max(tile.rect[0] as i32 + dx, 0) as u32;
                 tile.rect[1] =
                     std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
+            }
+            if mv.merge {
+                for t in fg[mv.dst].take() {
+                    merged.push(t);
+                }
             }
         }
 
@@ -96,14 +103,27 @@ impl Scene {
             }
         }
 
-        // update GPU state
+        // render tiles
         self.tiles.update(gl, layout, &tiles);
+        unsafe {
+            self.tiles.render(gl);
+        }
         self.glyphs.update(gl, layout, &tiles);
-    }
+        unsafe {
+            self.glyphs.render(gl);
+        }
 
-    pub unsafe fn render(&self, gl: &glow::Context) {
-        self.tiles.render(gl);
-        self.glyphs.render(gl);
+        // render merged tiles later
+        if !merged.is_empty() {
+            self.tiles.update(gl, layout, &merged);
+            unsafe {
+                self.tiles.render(gl);
+            }
+            self.glyphs.update(gl, layout, &merged);
+            unsafe {
+                self.glyphs.render(gl);
+            }
+        }
     }
 
     pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
