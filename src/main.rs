@@ -104,7 +104,6 @@ fn main() {
                         modifiers = *s;
                     }
                     WindowEvent::KeyboardInput { input, .. } => {
-                        println!("{:?}", input);
                         if let Some(key) = input.virtual_keycode {
                             use VirtualKeyCode::*;
                             if input.state != ElementState::Pressed
