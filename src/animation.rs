@@ -10,6 +10,7 @@ pub struct Animation<T> {
 }
 
 pub const DEFAULT_DURATION: Duration = Duration::from_millis(180);
+const EASE_PARAMETER: f32 = 2.5;
 
 impl<T> Animation<T> {
     pub fn new(duration: Duration, inner: T, result: Game) -> Self {
@@ -23,6 +24,14 @@ impl<T> Animation<T> {
 
     pub fn time(&self) -> f32 {
         let now = Instant::now();
-        (now - self.start).as_nanos() as f32 / self.duration.as_nanos() as f32
+        let t = (now - self.start).as_nanos() as f32
+            / self.duration.as_nanos() as f32;
+        if t >= 0.0 && t <= 1.0 {
+            let tp0 = t.powf(EASE_PARAMETER);
+            let tp1 = (1.0 - t).powf(EASE_PARAMETER);
+            tp0 / (tp0 + tp1)
+        } else {
+            t
+        }
     }
 }
