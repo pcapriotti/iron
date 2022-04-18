@@ -63,9 +63,7 @@ fn main() {
     eloop.run(move |e, _target, cf| {
         *cf = ControlFlow::Poll;
         match e {
-            Event::LoopDestroyed => {
-                scene.cleanup();
-            }
+            Event::LoopDestroyed => {}
             Event::RedrawRequested(_) => {
                 unsafe {
                     render(&gl, &layout, &mut scene, &mut anim, &mut game, &win)

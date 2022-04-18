@@ -16,11 +16,6 @@ impl Scene {
         Scene { tiles, glyphs }
     }
 
-    pub fn cleanup(&mut self) {
-        self.tiles.cleanup();
-        self.glyphs.cleanup();
-    }
-
     pub fn update(
         &mut self,
         layout: &Layout,

@@ -30,8 +30,10 @@ impl ElementBuffer {
             self.gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, None);
         }
     }
+}
 
-    pub fn cleanup(&mut self) {
+impl Drop for ElementBuffer {
+    fn drop(&mut self) {
         unsafe { self.gl.delete_buffer(self.inner) };
     }
 }

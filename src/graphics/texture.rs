@@ -39,12 +39,14 @@ impl Texture {
         Self { gl, inner: tex }
     }
 
-    pub fn cleanup(&mut self) {
-        unsafe { self.gl.delete_texture(self.inner) };
-    }
-
     pub fn bind<'a>(&'a self) -> BoundTexture<'a> {
         BoundTexture::new(&self.gl, &self)
+    }
+}
+
+impl Drop for Texture {
+    fn drop(&mut self) {
+        unsafe { self.gl.delete_texture(self.inner) };
     }
 }
 

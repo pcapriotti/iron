@@ -35,10 +35,6 @@ impl Program {
         Self { gl, inner: prog }
     }
 
-    pub fn cleanup(&mut self) {
-        unsafe { self.gl.delete_program(self.inner) };
-    }
-
     pub fn set_uniform(&mut self, name: &str, value: impl UniformValue) {
         unsafe {
             self.gl.use_program(Some(self.inner));
@@ -62,5 +58,11 @@ fn compile_shader_from_source(
             panic!("{}", gl.get_shader_info_log(shader));
         }
         shader
+    }
+}
+
+impl Drop for Program {
+    fn drop(&mut self) {
+        unsafe { self.gl.delete_program(self.inner) };
     }
 }

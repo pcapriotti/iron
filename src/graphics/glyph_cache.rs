@@ -167,8 +167,4 @@ impl GlyphCache {
 
         (infos, tex)
     }
-
-    pub fn cleanup(&mut self) {
-        self.buffer.cleanup();
-    }
 }

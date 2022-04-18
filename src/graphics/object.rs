@@ -27,15 +27,6 @@ impl Object {
         }
     }
 
-    pub fn cleanup(&mut self) {
-        self.vao.cleanup();
-        self.ebo.cleanup();
-        self.program.cleanup();
-        if let Some(texture) = &mut self.texture {
-            texture.cleanup();
-        }
-    }
-
     pub unsafe fn render(&self, num: u32) {
         if num <= 0 {
             return;

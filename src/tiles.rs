@@ -66,10 +66,6 @@ impl Tiles {
         }
     }
 
-    pub fn cleanup(&mut self) {
-        self.obj.cleanup();
-    }
-
     pub unsafe fn render(&self) {
         self.obj.render(self.num_instances);
     }

@@ -74,11 +74,6 @@ impl Glyphs {
         }
     }
 
-    pub fn cleanup(&mut self) {
-        self.obj.cleanup();
-        self.cache.cleanup();
-    }
-
     pub unsafe fn render(&self) {
         self.obj.render(self.num_instances);
     }

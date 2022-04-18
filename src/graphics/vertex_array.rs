@@ -1,11 +1,11 @@
-use super::vertex_buffer::{VertexBuffer, GL};
+use super::vertex_buffer::{VertexBuffer, VertexBufferRef, GL};
 use glow::HasContext;
 use std::rc::Rc;
 
 pub struct VertexArray {
     pub(super) gl: Rc<glow::Context>,
     pub inner: glow::NativeVertexArray,
-    buffers: Vec<glow::NativeBuffer>,
+    buffers: Vec<Rc<VertexBufferRef>>,
 }
 
 impl VertexArray {
@@ -24,11 +24,5 @@ impl VertexArray {
         buffer.enable(self.buffers.len() as u32);
         self.buffers.push(buffer.inner);
         unsafe { self.gl.bind_buffer(glow::ARRAY_BUFFER, None) };
-    }
-
-    pub fn cleanup(&mut self) {
-        for buf in &self.buffers {
-            unsafe { self.gl.delete_buffer(*buf) }
-        }
     }
 }

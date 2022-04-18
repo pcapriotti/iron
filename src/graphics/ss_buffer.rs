@@ -25,10 +25,6 @@ impl ShaderStorageBuffer {
         }
     }
 
-    pub fn cleanup(&mut self) {
-        unsafe { self.gl.delete_buffer(self.inner) };
-    }
-
     pub fn bind(&self, index: u32) {
         unsafe {
             self.gl.bind_buffer_base(
@@ -37,5 +33,10 @@ impl ShaderStorageBuffer {
                 Some(self.inner),
             );
         }
+    }
+}
+impl Drop for ShaderStorageBuffer {
+    fn drop(&mut self) {
+        unsafe { self.gl.delete_buffer(self.inner) };
     }
 }
