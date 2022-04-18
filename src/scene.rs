@@ -104,27 +104,8 @@ impl Scene {
             }
         }
 
-        // render tiles
-        self.tiles.update(&tiles);
-        unsafe {
-            self.tiles.render();
-        }
-        self.glyphs.update(&tiles);
-        unsafe {
-            self.glyphs.render();
-        }
-
-        // render merged tiles later
-        if !merged.is_empty() {
-            self.tiles.update(&merged);
-            unsafe {
-                self.tiles.render();
-            }
-            self.glyphs.update(&merged);
-            unsafe {
-                self.glyphs.render();
-            }
-        }
+        self.render_tiles(&tiles);
+        self.render_tiles(&merged);
 
         // render screen
         if false {
@@ -139,6 +120,21 @@ impl Scene {
                 value: None,
             }]);
             unsafe { self.screen.render() };
+        }
+    }
+
+    fn render_tiles(&mut self, tiles: &[Tile]) {
+        self.tiles.update(tiles);
+        unsafe {
+            self.tiles.render();
+        }
+        let gtiles = tiles.iter().filter_map(|t| {
+            t.value.map(|v| (t, format!("{}", (1 as u64) << v)))
+        });
+
+        self.glyphs.update(gtiles);
+        unsafe {
+            self.glyphs.render();
         }
     }
 

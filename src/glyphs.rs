@@ -62,66 +62,62 @@ impl Glyphs {
         self.obj.render(self.num_instances);
     }
 
-    pub fn update(&mut self, tiles: &[Tile]) {
+    pub fn update<'a>(
+        &mut self,
+        texts: impl Iterator<Item = (&'a Tile, impl AsRef<str>)>,
+    ) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
         let mut count = 0;
 
-        for t in tiles {
-            if let Tile {
-                value: Some(value),
-                rect,
-                ..
-            } = t
-            {
-                let value = format!("{}", (1 as u64) << value);
-                let scale = if value.len() <= 4 {
-                    0.4
-                } else if value.len() <= 6 {
-                    0.28
-                } else if value.len() <= 8 {
-                    0.21
-                } else {
-                    0.15
+        for (tile, text) in texts {
+            let text = text.as_ref();
+            let scale = if text.len() <= 4 {
+                0.4
+            } else if text.len() <= 6 {
+                0.28
+            } else if text.len() <= 8 {
+                0.21
+            } else {
+                0.15
+            };
+            let unit = (tile.rect[2] as f32 * scale) as u32;
+
+            // layout text
+            let mut x_offsets = Vec::new();
+            let mut text_width = 0;
+            for d in text.chars() {
+                let index = self.cache.index_of(d);
+                for _ in 0..4 {
+                    self.glyph_indices.buffer.push(index as u32);
+                }
+
+                x_offsets.push(text_width);
+                let width = {
+                    let glyph = self.infos[index].glyph().unpositioned();
+                    let width = glyph.h_metrics().advance_width;
+                    width / glyph.scale().x * unit as f32
                 };
-                let unit = (t.rect[2] as f32 * scale) as u32;
+                text_width += width as u32;
+            }
 
-                // layout text
-                let mut x_offsets = Vec::new();
-                let mut text_width = 0;
-                for d in value.chars() {
-                    let index = self.cache.index_of(d);
-                    for _ in 0..4 {
-                        self.glyph_indices.buffer.push(index as u32);
-                    }
+            let margin = (
+                ((tile.rect[2] as i32 - text_width as i32) / 2).max(0) as u32,
+                (tile.rect[3] - unit) / 2,
+            );
 
-                    x_offsets.push(text_width);
-                    let width = {
-                        let glyph = self.infos[index].glyph().unpositioned();
-                        let width = glyph.h_metrics().advance_width;
-                        width / glyph.scale().x * unit as f32
-                    };
-                    text_width += width as u32;
+            for i in 0..text.len() {
+                let x = tile.rect[0] + margin.0 + x_offsets[i];
+                let y = tile.rect[1] + margin.1;
+                for _ in 0..4 {
+                    self.cell_rects.buffer.extend_from_slice(&[
+                        x,
+                        y,
+                        unit as u32,
+                        unit as u32,
+                    ]);
                 }
-
-                let margin = (
-                    ((t.rect[2] as i32 - text_width as i32) / 2).max(0) as u32,
-                    (t.rect[3] - unit) / 2,
-                );
-
-                for i in 0..value.len() {
-                    let x = rect[0] + margin.0 + x_offsets[i];
-                    let y = rect[1] + margin.1;
-                    for _ in 0..4 {
-                        self.cell_rects.buffer.extend_from_slice(&[
-                            x,
-                            y,
-                            unit as u32,
-                            unit as u32,
-                        ]);
-                    }
-                    count += 1;
-                }
+                count += 1;
             }
         }
 
