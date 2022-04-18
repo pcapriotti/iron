@@ -35,10 +35,10 @@ impl Tiles {
             vertices.buffer.extend_from_slice(&quad::VERTICES);
         }
         vertices.update(glow::STATIC_DRAW);
-        vao.add_buffer(&gl, vertices);
+        vao.add_buffer(vertices);
 
         let rects: VertexBuffer<u32> = VertexBuffer::new(gl.clone(), 2);
-        vao.add_buffer(&gl, rects.clone());
+        vao.add_buffer(rects.clone());
 
         let mut ebo = ElementBuffer::new(gl.clone());
         let mut ebo_buffer = Vec::new();
@@ -53,10 +53,10 @@ impl Tiles {
                 3 + i * 4,
             ]);
         }
-        ebo.set_data(&gl, &ebo_buffer[..]);
+        ebo.set_data(&ebo_buffer[..]);
 
         let colours = VertexBuffer::new(gl.clone(), 3);
-        vao.add_buffer(&gl, colours.clone());
+        vao.add_buffer(colours.clone());
 
         Tiles {
             obj: Object::new(vao, ebo, None, program),
@@ -66,23 +66,21 @@ impl Tiles {
         }
     }
 
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        self.obj.cleanup(gl);
+    pub fn cleanup(&mut self) {
+        self.obj.cleanup();
     }
 
-    pub unsafe fn render(&self, gl: &glow::Context) {
-        self.obj.render(gl, self.num_instances);
+    pub unsafe fn render(&self) {
+        self.obj.render(self.num_instances);
     }
 
-    pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
-        self.obj.program().set_uniform(
-            gl,
-            "viewport",
-            rect(0, 0, width as i32, height as i32),
-        );
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.obj
+            .program()
+            .set_uniform("viewport", rect(0, 0, width as i32, height as i32));
     }
 
-    pub fn update(&mut self, gl: &glow::Context, tiles: &[Tile]) {
+    pub fn update(&mut self, tiles: &[Tile]) {
         self.rects.buffer.truncate(0);
         self.colours.buffer.truncate(0);
         let mut count = 0;

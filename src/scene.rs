@@ -11,20 +11,18 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(gl: Rc<glow::Context>, width: usize, height: usize) -> Scene {
-        Scene {
-            tiles: Tiles::new(gl.clone(), width * height * 3),
-            glyphs: Glyphs::new(gl.clone(), width * height * 10),
-        }
+        let tiles = Tiles::new(gl.clone(), width * height * 3);
+        let glyphs = Glyphs::new(gl.clone(), width * height * 10);
+        Scene { tiles, glyphs }
     }
 
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        self.tiles.cleanup(gl);
-        self.glyphs.cleanup(gl);
+    pub fn cleanup(&mut self) {
+        self.tiles.cleanup();
+        self.glyphs.cleanup();
     }
 
     pub fn update(
         &mut self,
-        gl: &glow::Context,
         layout: &Layout,
         game: &Game,
         moves: &Vec<Move>,
@@ -105,30 +103,30 @@ impl Scene {
         }
 
         // render tiles
-        self.tiles.update(gl, &tiles);
+        self.tiles.update(&tiles);
         unsafe {
-            self.tiles.render(gl);
+            self.tiles.render();
         }
-        self.glyphs.update(gl, &tiles);
+        self.glyphs.update(&tiles);
         unsafe {
-            self.glyphs.render(gl);
+            self.glyphs.render();
         }
 
         // render merged tiles later
         if !merged.is_empty() {
-            self.tiles.update(gl, &merged);
+            self.tiles.update(&merged);
             unsafe {
-                self.tiles.render(gl);
+                self.tiles.render();
             }
-            self.glyphs.update(gl, &merged);
+            self.glyphs.update(&merged);
             unsafe {
-                self.glyphs.render(gl);
+                self.glyphs.render();
             }
         }
     }
 
-    pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
-        self.tiles.resize(gl, width, height);
-        self.glyphs.resize(gl, width, height);
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.tiles.resize(width, height);
+        self.glyphs.resize(width, height);
     }
 }

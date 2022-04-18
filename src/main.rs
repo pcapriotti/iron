@@ -64,7 +64,7 @@ fn main() {
         *cf = ControlFlow::Poll;
         match e {
             Event::LoopDestroyed => {
-                scene.cleanup(&gl);
+                scene.cleanup();
             }
             Event::RedrawRequested(_) => {
                 unsafe {
@@ -86,7 +86,7 @@ fn main() {
                             game.width(),
                             game.height(),
                         );
-                        scene.resize(&gl, sz.width, sz.height);
+                        scene.resize(sz.width, sz.height);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
                     WindowEvent::ModifiersChanged(s) => {
@@ -161,13 +161,13 @@ unsafe fn render(
         if t >= 1.0 {
             let a = anim.take().unwrap();
             *game = a.result;
-            scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
+            scene.update(&layout, &game, &Vec::new(), 1.0);
         } else {
-            scene.update(&gl, &layout, &game, &a.inner, t);
+            scene.update(&layout, &game, &a.inner, t);
         }
         win.window().request_redraw();
     } else {
-        scene.update(&gl, &layout, &game, &Vec::new(), 1.0);
+        scene.update(&layout, &game, &Vec::new(), 1.0);
     }
 
     if cfg!(feature = "debug") {

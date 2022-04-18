@@ -84,8 +84,8 @@ impl<T: GL> VertexBuffer<T> {
 
 impl<T> Drop for VertexBuffer<T> {
     fn drop(&mut self) {
-        unsafe {
-            // self.gl.delete_buffer(self.inner);
-        }
+        // unsafe {
+        // self.gl.delete_buffer(self.inner);
+        // }
     }
 }

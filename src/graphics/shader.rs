@@ -3,55 +3,48 @@ use glow::HasContext;
 use std::rc::Rc;
 
 pub struct Program {
+    gl: Rc<glow::Context>,
     pub inner: glow::NativeProgram,
 }
 
 impl Program {
     pub fn new(gl: Rc<glow::Context>, vert: &[u8], frag: &[u8]) -> Self {
-        Self {
-            inner: unsafe {
-                let vert =
-                    compile_shader_from_source(&gl, glow::VERTEX_SHADER, vert);
+        let prog = unsafe {
+            let vert =
+                compile_shader_from_source(&gl, glow::VERTEX_SHADER, vert);
 
-                let frag = compile_shader_from_source(
-                    &gl,
-                    glow::FRAGMENT_SHADER,
-                    frag,
-                );
+            let frag =
+                compile_shader_from_source(&gl, glow::FRAGMENT_SHADER, frag);
 
-                let program = gl.create_program().unwrap();
-                gl.attach_shader(program, vert);
-                gl.attach_shader(program, frag);
-                gl.link_program(program);
-                if !gl.get_program_link_status(program) {
-                    panic!("link error: {}", gl.get_program_info_log(program));
-                }
+            let program = gl.create_program().unwrap();
+            gl.attach_shader(program, vert);
+            gl.attach_shader(program, frag);
+            gl.link_program(program);
+            if !gl.get_program_link_status(program) {
+                panic!("link error: {}", gl.get_program_info_log(program));
+            }
 
-                gl.detach_shader(program, vert);
-                gl.delete_shader(vert);
+            gl.detach_shader(program, vert);
+            gl.delete_shader(vert);
 
-                gl.detach_shader(program, frag);
-                gl.delete_shader(frag);
-                program
-            },
-        }
+            gl.detach_shader(program, frag);
+            gl.delete_shader(frag);
+            program
+        };
+
+        Self { gl, inner: prog }
     }
 
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        unsafe { gl.delete_program(self.inner) };
+    pub fn cleanup(&mut self) {
+        unsafe { self.gl.delete_program(self.inner) };
     }
 
-    pub fn set_uniform(
-        &mut self,
-        gl: &glow::Context,
-        name: &str,
-        value: impl UniformValue,
-    ) {
+    pub fn set_uniform(&mut self, name: &str, value: impl UniformValue) {
         unsafe {
-            gl.use_program(Some(self.inner));
-            let loc = gl.get_uniform_location(self.inner, name);
-            value.set(gl, loc.as_ref());
-            gl.use_program(None);
+            self.gl.use_program(Some(self.inner));
+            let loc = self.gl.get_uniform_location(self.inner, name);
+            value.set(&self.gl, loc.as_ref());
+            self.gl.use_program(None);
         }
     }
 }

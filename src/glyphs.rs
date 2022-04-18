@@ -33,7 +33,7 @@ impl Glyphs {
         }
         vertices.update(glow::STATIC_DRAW);
         vertices.buffer.truncate(0);
-        vao.add_buffer(&gl, vertices);
+        vao.add_buffer(vertices);
 
         let mut ebo = ElementBuffer::new(gl.clone());
         let mut ebo_buffer = Vec::new();
@@ -47,7 +47,7 @@ impl Glyphs {
                 3 + i * 4,
             ]);
         }
-        ebo.set_data(&gl, &ebo_buffer);
+        ebo.set_data(&ebo_buffer);
 
         // cell rects
         let cell_rects = VertexBuffer::new(gl.clone(), 4);
@@ -55,12 +55,12 @@ impl Glyphs {
         // glyph indices
         let glyph_indices = VertexBuffer::new(gl.clone(), 1);
 
-        vao.add_buffer(&gl, cell_rects.clone());
-        vao.add_buffer(&gl, glyph_indices.clone());
+        vao.add_buffer(cell_rects.clone());
+        vao.add_buffer(glyph_indices.clone());
 
         let mut cache = GlyphCache::new(gl.clone(), 0);
-        let (infos, texture) = cache.make_atlas(&gl);
-        cache.upload_atlas(&gl, &texture.bind(&gl));
+        let (infos, texture) = cache.make_atlas();
+        cache.upload_atlas(&texture.bind());
 
         let obj = Object::new(vao, ebo, Some(texture), program);
 
@@ -74,16 +74,16 @@ impl Glyphs {
         }
     }
 
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        self.obj.cleanup(gl);
-        self.cache.cleanup(gl);
+    pub fn cleanup(&mut self) {
+        self.obj.cleanup();
+        self.cache.cleanup();
     }
 
-    pub unsafe fn render(&self, gl: &glow::Context) {
-        self.obj.render(gl, self.num_instances);
+    pub unsafe fn render(&self) {
+        self.obj.render(self.num_instances);
     }
 
-    pub fn update(&mut self, gl: &glow::Context, tiles: &[Tile]) {
+    pub fn update(&mut self, tiles: &[Tile]) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
         let mut count = 0;
@@ -151,11 +151,9 @@ impl Glyphs {
         self.num_instances = count;
     }
 
-    pub fn resize(&mut self, gl: &glow::Context, width: u32, height: u32) {
-        self.obj.program().set_uniform(
-            gl,
-            "viewport",
-            rect(0, 0, width as i32, height as i32),
-        );
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.obj
+            .program()
+            .set_uniform("viewport", rect(0, 0, width as i32, height as i32));
     }
 }

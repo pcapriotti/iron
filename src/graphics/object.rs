@@ -26,31 +26,34 @@ impl Object {
             program,
         }
     }
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        self.vao.cleanup(gl);
-        self.ebo.cleanup(gl);
-        self.program.cleanup(gl);
+
+    pub fn cleanup(&mut self) {
+        self.vao.cleanup();
+        self.ebo.cleanup();
+        self.program.cleanup();
         if let Some(texture) = &mut self.texture {
-            texture.cleanup(gl);
+            texture.cleanup();
         }
     }
 
-    pub unsafe fn render(&self, gl: &glow::Context, num: u32) {
+    pub unsafe fn render(&self, num: u32) {
         if num <= 0 {
             return;
         };
-        gl.use_program(Some(self.program.inner));
-        gl.bind_vertex_array(Some(self.vao.inner));
-        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
-        let _btex = self.texture.as_ref().map(|t| t.bind(gl));
-        gl.draw_elements(
+        self.vao.gl.use_program(Some(self.program.inner));
+        self.vao.gl.bind_vertex_array(Some(self.vao.inner));
+        self.vao
+            .gl
+            .bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
+        let _btex = self.texture.as_ref().map(|t| t.bind());
+        self.vao.gl.draw_elements(
             glow::TRIANGLES,
             num as i32 * 6,
             glow::UNSIGNED_INT,
             0,
         );
-        gl.bind_vertex_array(None);
-        gl.use_program(None);
+        self.vao.gl.bind_vertex_array(None);
+        self.vao.gl.use_program(None);
     }
 
     pub fn program(&mut self) -> &mut Program {

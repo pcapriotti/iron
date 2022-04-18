@@ -40,6 +40,7 @@ impl<'a> GlyphInfo<'a> {
 
 /// A cache of glyphs to be passed to the GPU.
 pub struct GlyphCache {
+    gl: Rc<glow::Context>,
     font: Font<'static>,
     cache: Cache<'static>,
     scale: Scale,
@@ -66,9 +67,10 @@ impl GlyphCache {
             .build();
 
         let buffer = ShaderStorageBuffer::new(gl.clone());
-        buffer.bind(&gl, index);
+        buffer.bind(index);
 
         Self {
+            gl,
             font,
             cache,
             scale,
@@ -76,14 +78,10 @@ impl GlyphCache {
         }
     }
 
-    pub fn upload_atlas(
-        &mut self,
-        gl: &glow::Context,
-        _tex: &BoundTexture,
-    ) -> () {
+    pub fn upload_atlas(&mut self, _tex: &BoundTexture) -> () {
         self.cache
             .cache_queued(|rect, data| unsafe {
-                gl.tex_sub_image_2d(
+                self.gl.tex_sub_image_2d(
                     glow::TEXTURE_2D,
                     0,
                     rect.min.x as i32,
@@ -102,10 +100,7 @@ impl GlyphCache {
         c as usize - 0x21
     }
 
-    pub fn make_atlas(
-        &mut self,
-        gl: &glow::Context,
-    ) -> (Vec<GlyphInfo<'static>>, Texture) {
+    pub fn make_atlas(&mut self) -> (Vec<GlyphInfo<'static>>, Texture) {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
@@ -121,10 +116,10 @@ impl GlyphCache {
             glyphs
         };
 
-        let tex = Texture::new(gl, Self::WIDTH, Self::HEIGHT);
-        self.upload_atlas(gl, &tex.bind(gl));
+        let tex = Texture::new(self.gl.clone(), Self::WIDTH, Self::HEIGHT);
+        self.upload_atlas(&tex.bind());
 
-        unsafe { gl.bind_texture(glow::TEXTURE_2D, None) };
+        unsafe { self.gl.bind_texture(glow::TEXTURE_2D, None) };
 
         // populate info array
         let infos = {
@@ -167,13 +162,13 @@ impl GlyphCache {
             for info in infos.iter() {
                 info.write_to(&mut data);
             }
-            self.buffer.set_data(gl, &data);
+            self.buffer.set_data(&data);
         }
 
         (infos, tex)
     }
 
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        self.buffer.cleanup(gl);
+    pub fn cleanup(&mut self) {
+        self.buffer.cleanup();
     }
 }
