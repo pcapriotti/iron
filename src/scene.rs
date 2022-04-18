@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::game::{Game, Move, Value};
 use crate::glyphs::Glyphs;
 use crate::graphics::Quad;
@@ -13,9 +14,10 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(gl: Rc<glow::Context>) -> Scene {
+    pub fn new(gl: Rc<glow::Context>, config: &Config) -> Scene {
         let quad = Rc::new(RefCell::new(Quad::new(gl.clone())));
-        let tiles = Tiles::new(gl.clone(), quad.clone(), 0.03, 1.0);
+        let tiles =
+            Tiles::new(gl.clone(), quad.clone(), config.tile_radius, 1.0);
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
         let screen = Tiles::new(gl.clone(), quad.clone(), 0.0, 0.75);
         Scene {

@@ -1,4 +1,5 @@
 mod animation;
+mod config;
 mod game;
 mod glyphs;
 mod graphics;
@@ -7,6 +8,7 @@ mod scene;
 mod tiles;
 
 use animation::Animation;
+use config::Config;
 use game::{Direction, Game, Move};
 use glow::HasContext;
 use glutin::event::{ElementState, Event, ModifiersState, VirtualKeyCode};
@@ -14,6 +16,7 @@ use glutin::event_loop::ControlFlow;
 use layout::Layout;
 use scene::Scene;
 use std::rc::Rc;
+use std::time::Duration;
 
 const INITIAL_SIZE: (u32, u32) = (800, 600);
 
@@ -44,10 +47,11 @@ fn main() {
     };
     let gl = Rc::new(gl);
 
-    let mut game = Game::new(4, 4);
+    let config = get_config().unwrap_or(Config::default());
+    let mut game = Game::new(config.width, config.height);
     game.add_random_tile();
 
-    let mut scene = Scene::new(gl.clone());
+    let mut scene = Scene::new(gl.clone(), &config);
 
     let mut layout = Layout::compute(
         INITIAL_SIZE.0,
@@ -135,7 +139,9 @@ fn main() {
                                     }
 
                                     anim = Some(Animation::new(
-                                        animation::DEFAULT_DURATION,
+                                        Duration::from_millis(
+                                            config.animation_duration_ms,
+                                        ),
                                         moves,
                                         game2,
                                     ));
@@ -187,4 +193,16 @@ unsafe fn render(
         println!("{} us", (Instant::now() - start).as_micros());
     }
     win.swap_buffers().unwrap();
+}
+
+fn get_config() -> Option<Config> {
+    let mut path = dirs::config_dir()?;
+    path.push("iron");
+    path.push("config.toml");
+
+    let s = std::fs::read_to_string(path).ok()?;
+
+    let config: Config = toml::from_str(&s).unwrap();
+
+    Some(config)
 }

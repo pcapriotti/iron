@@ -3,6 +3,10 @@ use crate::graphics::{Object, Program, Quad, VertexArray, VertexBuffer};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+pub fn default_tile_radius() -> f32 {
+    0.03
+}
+
 pub struct Tiles {
     obj: Object,
     quad: Rc<RefCell<Quad>>,

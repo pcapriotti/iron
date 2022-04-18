@@ -9,7 +9,10 @@ pub struct Animation<T> {
     pub result: Game,
 }
 
-pub const DEFAULT_DURATION: Duration = Duration::from_millis(160);
+pub fn default_duration_ms() -> u64 {
+    160
+}
+
 const EASE_PARAMETER: f32 = 2.5;
 
 impl<T> Animation<T> {
