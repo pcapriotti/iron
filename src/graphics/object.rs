@@ -1,13 +1,14 @@
-use super::element_buffer::ElementBuffer;
+use super::element_buffer::ElementBufferRef;
 use super::shader::Program;
 use super::texture::Texture;
 use super::vertex_array::VertexArray;
+use std::rc::Rc;
 
 use glow::HasContext;
 
 pub struct Object {
     vao: VertexArray,
-    ebo: ElementBuffer,
+    ebo: Rc<ElementBufferRef>,
     texture: Option<Texture>,
     program: Program,
 }
@@ -15,7 +16,7 @@ pub struct Object {
 impl Object {
     pub fn new(
         vao: VertexArray,
-        ebo: ElementBuffer,
+        ebo: Rc<ElementBufferRef>,
         texture: Option<Texture>,
         program: Program,
     ) -> Self {
@@ -35,7 +36,7 @@ impl Object {
         let _bvao = self.vao.bind();
 
         gl.use_program(Some(self.program.inner));
-        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
+        let _bebo = self.ebo.bind();
         let _btex = self.texture.as_ref().map(|t| t.bind());
         gl.draw_elements(
             glow::TRIANGLES,

@@ -1,5 +1,6 @@
 use crate::game::{Game, Move};
 use crate::glyphs::Glyphs;
+use crate::graphics::Quad;
 use crate::layout::Layout;
 use crate::tiles::{Tile, Tiles};
 use std::rc::Rc;
@@ -10,9 +11,10 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(gl: Rc<glow::Context>, width: usize, height: usize) -> Scene {
-        let tiles = Tiles::new(gl.clone(), width * height * 3);
-        let glyphs = Glyphs::new(gl.clone(), width * height * 10);
+    pub fn new(gl: Rc<glow::Context>) -> Scene {
+        let quad = Quad::new(gl.clone());
+        let tiles = Tiles::new(gl.clone(), quad.clone());
+        let glyphs = Glyphs::new(gl.clone(), quad.clone());
         Scene { tiles, glyphs }
     }
 

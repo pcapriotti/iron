@@ -1,8 +1,6 @@
 use crate::game::Value;
 use crate::graphics::util::rect;
-use crate::graphics::{
-    quad, ElementBuffer, Object, Program, VertexArray, VertexBuffer,
-};
+use crate::graphics::{Object, Program, Quad, VertexArray, VertexBuffer};
 use std::rc::Rc;
 
 pub struct Tiles {
@@ -21,45 +19,24 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(gl: Rc<glow::Context>, max_tiles: usize) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Quad) -> Self {
         let program = Program::new(
             gl.clone(),
             include_bytes!("../shaders/tile.v.glsl"),
             include_bytes!("../shaders/tile.f.glsl"),
         );
-        let mut vao = VertexArray::new(gl.clone());
 
-        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl.clone(), 2);
-        // prefill vertices
-        for _ in 0..max_tiles {
-            vertices.buffer.extend_from_slice(&quad::VERTICES);
-        }
-        vertices.update(glow::STATIC_DRAW);
-        vao.add_buffer(vertices);
+        let mut vao = VertexArray::new(gl.clone());
+        vao.add_buffer(quad.vbo.to_ref());
 
         let rects: VertexBuffer<u32> = VertexBuffer::new(gl.clone(), 2);
-        vao.add_buffer(rects.clone());
-
-        let mut ebo = ElementBuffer::new(gl.clone());
-        let mut ebo_buffer = Vec::new();
-        // prefill indices
-        for i in 0..max_tiles as u32 {
-            ebo_buffer.extend_from_slice(&[
-                i * 4,
-                1 + i * 4,
-                2 + i * 4,
-                2 + i * 4,
-                1 + i * 4,
-                3 + i * 4,
-            ]);
-        }
-        ebo.set_data(&ebo_buffer[..]);
+        vao.add_buffer(rects.to_ref());
 
         let colours = VertexBuffer::new(gl.clone(), 3);
-        vao.add_buffer(colours.clone());
+        vao.add_buffer(colours.to_ref());
 
         Tiles {
-            obj: Object::new(vao, ebo, None, program),
+            obj: Object::new(vao, quad.ebo.to_ref(), None, program),
             rects,
             colours,
             num_instances: 0,

@@ -1,4 +1,4 @@
-use super::vertex_buffer::{VertexBuffer, VertexBufferRef, GL};
+use super::vertex_buffer::VertexBufferRef;
 use glow::HasContext;
 use std::rc::Rc;
 
@@ -19,9 +19,9 @@ impl VertexArray {
         }
     }
 
-    pub fn add_buffer<T: GL>(&mut self, buffer: VertexBuffer<T>) {
+    pub fn add_buffer(&mut self, buffer: Rc<VertexBufferRef>) {
         buffer.enable(&self.bind(), self.buffers.len() as u32);
-        self.buffers.push(buffer.inner());
+        self.buffers.push(buffer);
     }
 
     pub fn bind<'a>(&'a self) -> BoundVertexArray<'a> {

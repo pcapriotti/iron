@@ -13,6 +13,7 @@ mod vertex_buffer;
 pub use element_buffer::ElementBuffer;
 pub use glyph_cache::{GlyphCache, GlyphInfo};
 pub use object::Object;
+pub use quad::Quad;
 pub use shader::Program;
 pub use ss_buffer::ShaderStorageBuffer;
 pub use texture::{BoundTexture, Texture};

@@ -1,7 +1,6 @@
 use crate::graphics::util::rect;
 use crate::graphics::{
-    quad, ElementBuffer, GlyphCache, GlyphInfo, Object, Program, VertexArray,
-    VertexBuffer,
+    GlyphCache, GlyphInfo, Object, Program, Quad, VertexArray, VertexBuffer,
 };
 use crate::tiles::Tile;
 use std::rc::Rc;
@@ -18,7 +17,7 @@ pub struct Glyphs {
 }
 
 impl Glyphs {
-    pub fn new(gl: Rc<glow::Context>, max_glyphs: usize) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Quad) -> Self {
         let mut vao = VertexArray::new(gl.clone());
 
         let program = Program::new(
@@ -27,27 +26,7 @@ impl Glyphs {
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
-        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl.clone(), 2);
-        for _ in 0..max_glyphs {
-            vertices.buffer.extend_from_slice(&quad::VERTICES);
-        }
-        vertices.update(glow::STATIC_DRAW);
-        vertices.buffer.truncate(0);
-        vao.add_buffer(vertices);
-
-        let mut ebo = ElementBuffer::new(gl.clone());
-        let mut ebo_buffer = Vec::new();
-        for i in 0..max_glyphs as u32 {
-            ebo_buffer.extend_from_slice(&[
-                i * 4,
-                1 + i * 4,
-                2 + i * 4,
-                2 + i * 4,
-                1 + i * 4,
-                3 + i * 4,
-            ]);
-        }
-        ebo.set_data(&ebo_buffer);
+        vao.add_buffer(quad.vbo.to_ref());
 
         // cell rects
         let cell_rects = VertexBuffer::new(gl.clone(), 4);
@@ -55,14 +34,14 @@ impl Glyphs {
         // glyph indices
         let glyph_indices = VertexBuffer::new(gl.clone(), 1);
 
-        vao.add_buffer(cell_rects.clone());
-        vao.add_buffer(glyph_indices.clone());
+        vao.add_buffer(cell_rects.to_ref());
+        vao.add_buffer(glyph_indices.to_ref());
 
         let mut cache = GlyphCache::new(gl.clone(), 0);
         let (infos, texture) = cache.make_atlas();
         cache.upload_atlas(&texture.bind());
 
-        let obj = Object::new(vao, ebo, Some(texture), program);
+        let obj = Object::new(vao, quad.ebo.to_ref(), Some(texture), program);
 
         Self {
             obj,
