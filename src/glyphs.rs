@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 pub struct Glyphs {
     obj: Object,
+    quad: Rc<Quad>,
 
     cell_rects: VertexBuffer<u32>,
     glyph_indices: VertexBuffer<u32>,
@@ -17,7 +18,7 @@ pub struct Glyphs {
 }
 
 impl Glyphs {
-    pub fn new(gl: Rc<glow::Context>, quad: Quad) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Rc<Quad>) -> Self {
         let mut vao = VertexArray::new(gl.clone());
 
         let program = Program::new(
@@ -26,7 +27,7 @@ impl Glyphs {
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
-        vao.add_buffer(quad.vbo.to_ref());
+        vao.add_buffer(quad.vbo());
 
         // cell rects
         let cell_rects = VertexBuffer::new(gl.clone(), 4);
@@ -41,11 +42,11 @@ impl Glyphs {
         let (infos, texture) = cache.make_atlas();
         cache.upload_atlas(&texture.bind());
 
-        let obj =
-            Object::new(gl, vao, quad.ebo.to_ref(), Some(texture), program);
+        let obj = Object::new(gl, vao, quad.ebo(), Some(texture), program);
 
         Self {
             obj,
+            quad,
             cell_rects,
             glyph_indices,
             num_instances: 0,
@@ -55,6 +56,7 @@ impl Glyphs {
     }
 
     pub unsafe fn render(&self) {
+        self.quad.ensure(self.num_instances);
         self.obj.render(self.num_instances);
     }
 

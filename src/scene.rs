@@ -12,7 +12,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(gl: Rc<glow::Context>) -> Scene {
-        let quad = Quad::new(gl.clone());
+        let quad = Rc::new(Quad::new(gl.clone()));
         let tiles = Tiles::new(gl.clone(), quad.clone());
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
         Scene { tiles, glyphs }

@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 pub struct Tiles {
     obj: Object,
+    quad: Rc<Quad>,
     rects: VertexBuffer<u32>,
     colours: VertexBuffer<f32>,
     num_instances: u32,
@@ -19,7 +20,7 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(gl: Rc<glow::Context>, quad: Quad) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Rc<Quad>) -> Self {
         let program = Program::new(
             gl.clone(),
             include_bytes!("../shaders/tile.v.glsl"),
@@ -27,7 +28,7 @@ impl Tiles {
         );
 
         let mut vao = VertexArray::new(gl.clone());
-        vao.add_buffer(quad.vbo.to_ref());
+        vao.add_buffer(quad.vbo());
 
         let rects: VertexBuffer<u32> = VertexBuffer::new(gl.clone(), 2);
         vao.add_buffer(rects.to_ref());
@@ -36,7 +37,8 @@ impl Tiles {
         vao.add_buffer(colours.to_ref());
 
         Tiles {
-            obj: Object::new(gl, vao, quad.ebo.to_ref(), None, program),
+            obj: Object::new(gl, vao, quad.ebo(), None, program),
+            quad,
             rects,
             colours,
             num_instances: 0,
@@ -44,6 +46,7 @@ impl Tiles {
     }
 
     pub unsafe fn render(&self) {
+        self.quad.ensure(self.num_instances);
         self.obj.render(self.num_instances);
     }
 

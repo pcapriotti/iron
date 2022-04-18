@@ -1,5 +1,6 @@
-use super::element_buffer::ElementBuffer;
-use super::vertex_buffer::VertexBuffer;
+use super::element_buffer::{ElementBuffer, ElementBufferRef};
+use super::vertex_buffer::{VertexBuffer, VertexBufferRef};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub const VERTICES: [f32; 8] = [
@@ -9,27 +10,45 @@ pub const VERTICES: [f32; 8] = [
     1.0, 1.0, // top right
 ];
 
-const MIN_SIZE: usize = 32;
+const MIN_SIZE: u32 = 32;
 
-#[derive(Clone)]
 pub struct Quad {
-    pub ebo: Rc<ElementBuffer>,
-    pub vbo: Rc<VertexBuffer<f32>>,
+    ebo: RefCell<ElementBuffer>,
+    vbo: RefCell<VertexBuffer<f32>>,
+    size: RefCell<u32>,
 }
 
 impl Quad {
     pub fn new(gl: Rc<glow::Context>) -> Quad {
-        let mut ebo = ElementBuffer::new(gl.clone());
-        let mut vbo = VertexBuffer::new(gl, 2);
+        let ebo = ElementBuffer::new(gl.clone());
+        let vbo = VertexBuffer::new(gl, 2);
+        let quad = Quad {
+            ebo: RefCell::new(ebo),
+            vbo: RefCell::new(vbo),
+            size: RefCell::new(0),
+        };
 
-        // prefill vertices
-        for _ in 0..MIN_SIZE {
-            vbo.buffer.extend_from_slice(&VERTICES);
+        quad.ensure(MIN_SIZE);
+        quad
+    }
+
+    pub fn ebo(&self) -> Rc<ElementBufferRef> {
+        self.ebo.borrow().to_ref()
+    }
+
+    pub fn vbo(&self) -> Rc<VertexBufferRef> {
+        self.vbo.borrow().to_ref()
+    }
+
+    pub fn ensure(&self, num: u32) {
+        let size = self.size.replace_with(|sz| num.max(*sz));
+
+        if num <= size {
+            return;
         }
-        vbo.update(glow::STATIC_DRAW);
 
-        // prefill indices
-        for i in 0..MIN_SIZE as u32 {
+        let mut ebo = self.ebo.borrow_mut();
+        for i in size..num as u32 {
             ebo.buffer.extend_from_slice(&[
                 i * 4,
                 1 + i * 4,
@@ -41,9 +60,10 @@ impl Quad {
         }
         ebo.update();
 
-        Quad {
-            ebo: Rc::new(ebo),
-            vbo: Rc::new(vbo),
+        let mut vbo = self.vbo.borrow_mut();
+        for _ in size..num {
+            vbo.buffer.extend_from_slice(&VERTICES);
         }
+        vbo.update(glow::STATIC_DRAW);
     }
 }
