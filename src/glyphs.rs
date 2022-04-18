@@ -41,7 +41,8 @@ impl Glyphs {
         let (infos, texture) = cache.make_atlas();
         cache.upload_atlas(&texture.bind());
 
-        let obj = Object::new(vao, quad.ebo.to_ref(), Some(texture), program);
+        let obj =
+            Object::new(gl, vao, quad.ebo.to_ref(), Some(texture), program);
 
         Self {
             obj,

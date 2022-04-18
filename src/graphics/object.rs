@@ -1,43 +1,29 @@
-use super::element_buffer::ElementBufferRef;
+use super::element_buffer::{BoundElementBuffer, ElementBufferRef};
 use super::shader::Program;
-use super::texture::Texture;
-use super::vertex_array::VertexArray;
+use super::texture::{BoundTexture, Texture};
+use super::vertex_array::{BoundVertexArray, VertexArray};
 use std::rc::Rc;
 
 use glow::HasContext;
 
 pub struct Object {
+    gl: Rc<glow::Context>,
     vao: VertexArray,
     ebo: Rc<ElementBufferRef>,
     texture: Option<Texture>,
     program: Program,
 }
 
-impl Object {
-    pub fn new(
-        vao: VertexArray,
-        ebo: Rc<ElementBufferRef>,
-        texture: Option<Texture>,
-        program: Program,
-    ) -> Self {
-        Self {
-            vao,
-            ebo,
-            texture,
-            program,
-        }
-    }
-
-    pub unsafe fn render(&self, num: u32) {
-        if num <= 0 {
-            return;
-        };
-        let gl = self.vao.context();
-        let _bvao = self.vao.bind();
-
-        gl.use_program(Some(self.program.inner));
-        let _bebo = self.ebo.bind();
-        let _btex = self.texture.as_ref().map(|t| t.bind());
+pub fn render_object(
+    gl: &glow::Context,
+    _bvao: &BoundVertexArray,
+    _bebo: &BoundElementBuffer,
+    _btex: &Option<BoundTexture>,
+    program: &Program,
+    num: u32,
+) {
+    unsafe {
+        gl.use_program(Some(program.inner));
         gl.draw_elements(
             glow::TRIANGLES,
             num as i32 * 6,
@@ -45,6 +31,38 @@ impl Object {
             0,
         );
         gl.use_program(None);
+    }
+}
+
+impl Object {
+    pub fn new(
+        gl: Rc<glow::Context>,
+        vao: VertexArray,
+        ebo: Rc<ElementBufferRef>,
+        texture: Option<Texture>,
+        program: Program,
+    ) -> Self {
+        Self {
+            gl,
+            vao,
+            ebo,
+            texture,
+            program,
+        }
+    }
+
+    pub fn render(&self, num: u32) {
+        if num > 0 {
+            let btex = self.texture.as_ref().map(|t| t.bind());
+            render_object(
+                &self.gl,
+                &self.vao.bind(),
+                &self.ebo.bind(),
+                &btex,
+                &self.program,
+                num,
+            );
+        }
     }
 
     pub fn program(&mut self) -> &mut Program {

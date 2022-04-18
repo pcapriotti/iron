@@ -36,7 +36,7 @@ impl Tiles {
         vao.add_buffer(colours.to_ref());
 
         Tiles {
-            obj: Object::new(vao, quad.ebo.to_ref(), None, program),
+            obj: Object::new(gl, vao, quad.ebo.to_ref(), None, program),
             rects,
             colours,
             num_instances: 0,
