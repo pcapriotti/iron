@@ -12,7 +12,6 @@ pub struct Tiles {
     quad: Rc<RefCell<Quad>>,
     rects: VertexBuffer<u32>,
     colours: VertexBuffer<f32>,
-    num_instances: u32,
 }
 
 #[derive(Debug)]
@@ -52,7 +51,6 @@ impl Tiles {
             quad,
             rects,
             colours,
-            num_instances: 0,
         }
     }
 
@@ -86,9 +84,8 @@ impl Tiles {
 
         self.rects.update(glow::STATIC_DRAW);
         self.colours.update(glow::STATIC_DRAW);
-        self.num_instances = count;
 
-        self.quad.borrow_mut().ensure(self.num_instances);
-        self.obj.render(self.num_instances);
+        self.quad.borrow_mut().ensure(count);
+        self.obj.render(count);
     }
 }
