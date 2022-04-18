@@ -3,6 +3,7 @@ use crate::glyphs::Glyphs;
 use crate::graphics::Quad;
 use crate::layout::Layout;
 use crate::tiles::{Tile, Tiles};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct Scene {
@@ -12,7 +13,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn new(gl: Rc<glow::Context>) -> Scene {
-        let quad = Rc::new(Quad::new(gl.clone()));
+        let quad = Rc::new(RefCell::new(Quad::new(gl.clone())));
         let tiles = Tiles::new(gl.clone(), quad.clone());
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
         Scene { tiles, glyphs }

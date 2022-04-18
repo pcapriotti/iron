@@ -3,11 +3,12 @@ use crate::graphics::{
     GlyphCache, GlyphInfo, Object, Program, Quad, VertexArray, VertexBuffer,
 };
 use crate::tiles::Tile;
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct Glyphs {
     obj: Object,
-    quad: Rc<Quad>,
+    quad: Rc<RefCell<Quad>>,
 
     cell_rects: VertexBuffer<u32>,
     glyph_indices: VertexBuffer<u32>,
@@ -18,7 +19,7 @@ pub struct Glyphs {
 }
 
 impl Glyphs {
-    pub fn new(gl: Rc<glow::Context>, quad: Rc<Quad>) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Rc<RefCell<Quad>>) -> Self {
         let mut vao = VertexArray::new(gl.clone());
 
         let program = Program::new(
@@ -27,7 +28,7 @@ impl Glyphs {
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
-        vao.add_buffer(quad.vbo());
+        vao.add_buffer(quad.borrow().vbo());
 
         // cell rects
         let cell_rects = VertexBuffer::new(gl.clone(), 4);
@@ -42,7 +43,8 @@ impl Glyphs {
         let (infos, texture) = cache.make_atlas();
         cache.upload_atlas(&texture.bind());
 
-        let obj = Object::new(gl, vao, quad.ebo(), Some(texture), program);
+        let obj =
+            Object::new(gl, vao, quad.borrow().ebo(), Some(texture), program);
 
         Self {
             obj,
@@ -56,7 +58,7 @@ impl Glyphs {
     }
 
     pub unsafe fn render(&self) {
-        self.quad.ensure(self.num_instances);
+        self.quad.borrow_mut().ensure(self.num_instances);
         self.obj.render(self.num_instances);
     }
 

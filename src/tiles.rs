@@ -1,11 +1,12 @@
 use crate::game::Value;
 use crate::graphics::util::rect;
 use crate::graphics::{Object, Program, Quad, VertexArray, VertexBuffer};
+use std::cell::RefCell;
 use std::rc::Rc;
 
 pub struct Tiles {
     obj: Object,
-    quad: Rc<Quad>,
+    quad: Rc<RefCell<Quad>>,
     rects: VertexBuffer<u32>,
     colours: VertexBuffer<f32>,
     num_instances: u32,
@@ -20,7 +21,7 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(gl: Rc<glow::Context>, quad: Rc<Quad>) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Rc<RefCell<Quad>>) -> Self {
         let program = Program::new(
             gl.clone(),
             include_bytes!("../shaders/tile.v.glsl"),
@@ -28,7 +29,7 @@ impl Tiles {
         );
 
         let mut vao = VertexArray::new(gl.clone());
-        vao.add_buffer(quad.vbo());
+        vao.add_buffer(quad.borrow().vbo());
 
         let rects: VertexBuffer<u32> = VertexBuffer::new(gl.clone(), 2);
         vao.add_buffer(rects.to_ref());
@@ -36,8 +37,10 @@ impl Tiles {
         let colours = VertexBuffer::new(gl.clone(), 3);
         vao.add_buffer(colours.to_ref());
 
+        let obj = Object::new(gl, vao, quad.borrow().ebo(), None, program);
+
         Tiles {
-            obj: Object::new(gl, vao, quad.ebo(), None, program),
+            obj,
             quad,
             rects,
             colours,
@@ -46,7 +49,7 @@ impl Tiles {
     }
 
     pub unsafe fn render(&self) {
-        self.quad.ensure(self.num_instances);
+        self.quad.borrow_mut().ensure(self.num_instances);
         self.obj.render(self.num_instances);
     }
 
