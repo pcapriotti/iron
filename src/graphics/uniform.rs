@@ -18,3 +18,9 @@ impl UniformValue for Rect<i32> {
         );
     }
 }
+
+impl UniformValue for f32 {
+    unsafe fn set(&self, gl: &glow::Context, loc: Loc) {
+        gl.uniform_1_f32(loc, *self);
+    }
+}

@@ -14,7 +14,7 @@ pub struct Scene {
 impl Scene {
     pub fn new(gl: Rc<glow::Context>) -> Scene {
         let quad = Rc::new(RefCell::new(Quad::new(gl.clone())));
-        let tiles = Tiles::new(gl.clone(), quad.clone());
+        let tiles = Tiles::new(gl.clone(), quad.clone(), 0.03);
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
         Scene { tiles, glyphs }
     }

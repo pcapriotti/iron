@@ -5,7 +5,7 @@ in vec3 frag_col;
 
 out vec4 col;
 
-float radius = 0.03;
+uniform float radius;
 
 // sdf of a rectangle of half-dimensions dim, centered at p0
 float sdf(vec2 p0, vec2 dim, vec2 p) {

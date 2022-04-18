@@ -21,12 +21,17 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(gl: Rc<glow::Context>, quad: Rc<RefCell<Quad>>) -> Self {
-        let program = Program::new(
+    pub fn new(
+        gl: Rc<glow::Context>,
+        quad: Rc<RefCell<Quad>>,
+        radius: f32,
+    ) -> Self {
+        let mut program = Program::new(
             gl.clone(),
             include_bytes!("../shaders/tile.v.glsl"),
             include_bytes!("../shaders/tile.f.glsl"),
         );
+        program.set_uniform("radius", radius);
 
         let mut vao = VertexArray::new(gl.clone());
         vao.add_buffer(quad.borrow().vbo());
