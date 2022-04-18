@@ -97,14 +97,14 @@ impl GlyphCache {
     }
 
     pub fn index_of(&self, c: char) -> usize {
-        c as usize - 0x21
+        c as usize - 0x20
     }
 
     pub fn make_atlas(&mut self) -> (Vec<GlyphInfo<'static>>, Texture) {
         // queue all printable ASCII characters
         let glyphs = {
             let mut glyphs = Vec::with_capacity(128);
-            for c in 0x21..0x7f as u8 {
+            for c in 0x20..0x7f as u8 {
                 let glyph = self
                     .font
                     .glyph(c as char)
@@ -129,7 +129,16 @@ impl GlyphCache {
                     .cache
                     .rect_for(MAIN_FONT_ID, &glyph)
                     .unwrap()
-                    .expect("Missing glyph in the cache");
+                    .unwrap_or((
+                        Rect {
+                            min: point(0.0, 0.0),
+                            max: point(0.0, 0.0),
+                        },
+                        Rect {
+                            min: point(0, 0),
+                            max: point(0, 0),
+                        },
+                    ));
 
                 let vmetrics = glyph.font().v_metrics(self.scale);
 

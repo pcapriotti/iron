@@ -122,6 +122,20 @@ impl Scene {
                 .iter(),
             );
             unsafe { self.screen.render() };
+
+            self.glyphs.update(
+                [(
+                    &[
+                        layout.origin.0,
+                        layout.origin.1,
+                        layout.size.0,
+                        (layout.size.1 as f32 * 0.6) as u32,
+                    ],
+                    "Game over",
+                )]
+                .into_iter(),
+            );
+            unsafe { self.glyphs.render() };
         }
     }
 
@@ -131,7 +145,7 @@ impl Scene {
             self.tiles.render();
         }
         let gtiles = tiles.iter().filter_map(|(t, v)| {
-            v.map(|v| (t, format!("{}", (1 as u64) << v)))
+            v.map(|v| (&t.rect, format!("{}", (1 as u64) << v)))
         });
 
         self.glyphs.update(gtiles);

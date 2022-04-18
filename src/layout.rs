@@ -35,7 +35,7 @@ impl Layout {
             unit,
             gap,
             origin: (x0, y0),
-            size: (pixel_width, pixel_height),
+            size: (display_width, display_height),
             width,
             height,
         }

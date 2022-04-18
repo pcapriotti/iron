@@ -2,7 +2,6 @@ use crate::graphics::util::rect;
 use crate::graphics::{
     GlyphCache, GlyphInfo, Object, Program, Quad, VertexArray, VertexBuffer,
 };
-use crate::tiles::Tile;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -64,13 +63,13 @@ impl Glyphs {
 
     pub fn update<'a>(
         &mut self,
-        texts: impl Iterator<Item = (&'a Tile, impl AsRef<str>)>,
+        texts: impl Iterator<Item = (&'a [u32; 4], impl AsRef<str>)>,
     ) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
         let mut count = 0;
 
-        for (tile, text) in texts {
+        for (rect, text) in texts {
             let text = text.as_ref();
             let scale = if text.len() <= 4 {
                 0.4
@@ -81,7 +80,7 @@ impl Glyphs {
             } else {
                 0.15
             };
-            let unit = (tile.rect[2] as f32 * scale) as u32;
+            let unit = (rect[2] as f32 * scale) as u32;
 
             // layout text
             let mut x_offsets = Vec::new();
@@ -102,13 +101,13 @@ impl Glyphs {
             }
 
             let margin = (
-                ((tile.rect[2] as i32 - text_width as i32) / 2).max(0) as u32,
-                (tile.rect[3] - unit) / 2,
+                ((rect[2] as i32 - text_width as i32) / 2).max(0) as u32,
+                (rect[3] - unit) / 2,
             );
 
             for i in 0..text.len() {
-                let x = tile.rect[0] + margin.0 + x_offsets[i];
-                let y = tile.rect[1] + margin.1;
+                let x = rect[0] + margin.0 + x_offsets[i];
+                let y = rect[1] + margin.1;
                 for _ in 0..4 {
                     self.cell_rects.buffer.extend_from_slice(&[
                         x,
