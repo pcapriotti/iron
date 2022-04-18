@@ -101,7 +101,10 @@ fn main() {
                             if game.is_over() {
                                 match key {
                                     Space | Return | N => {
-                                        game = Game::new(4, 4);
+                                        game = Game::new(
+                                            game.width(),
+                                            game.height(),
+                                        );
                                         game.add_random_tile();
                                         anim = None;
                                         win.window().request_redraw();

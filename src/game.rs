@@ -99,10 +99,10 @@ impl Game {
         };
 
         let get: Box<dyn Fn(usize, usize) -> usize> = match dir {
-            Direction::E => Box::new(|x, y| height - y - 1 + x * width),
-            Direction::N => Box::new(|x, y| x + (height - y - 1) * width),
-            Direction::W => Box::new(|x, y| y + x * width),
-            Direction::S => Box::new(|x, y| x + y * width),
+            Direction::E => Box::new(|x, y| height - y - 1 + x * self.width),
+            Direction::N => Box::new(|x, y| x + (height - y - 1) * self.width),
+            Direction::W => Box::new(|x, y| y + x * self.width),
+            Direction::S => Box::new(|x, y| x + y * self.width),
         };
 
         for x in 0..width {
@@ -337,6 +337,17 @@ mod tests {
 
         let mut game2 = Game::new(4, 4);
         game2.tiles[7] = Some(2);
+        assert_eq!(game, game2);
+    }
+
+    #[test]
+    fn test_nonsquare_move() {
+        let mut game = Game::new(5, 3);
+        game.tiles[1] = Some(1);
+        assert_eq!(vec![Move::new(1, 4, false)], game.step(Direction::E));
+
+        let mut game2 = Game::new(5, 3);
+        game2.tiles[4] = Some(1);
         assert_eq!(game, game2);
     }
 }
