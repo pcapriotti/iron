@@ -3,8 +3,8 @@ use glow::HasContext;
 use std::rc::Rc;
 
 pub struct VertexArray {
-    pub(super) gl: Rc<glow::Context>,
-    pub inner: glow::NativeVertexArray,
+    gl: Rc<glow::Context>,
+    inner: glow::NativeVertexArray,
     buffers: Vec<Rc<VertexBufferRef>>,
 }
 
@@ -20,9 +20,34 @@ impl VertexArray {
     }
 
     pub fn add_buffer<T: GL>(&mut self, buffer: VertexBuffer<T>) {
-        unsafe { self.gl.bind_vertex_array(Some(self.inner)) };
-        buffer.enable(self.buffers.len() as u32);
-        self.buffers.push(buffer.inner);
-        unsafe { self.gl.bind_buffer(glow::ARRAY_BUFFER, None) };
+        buffer.enable(&self.bind(), self.buffers.len() as u32);
+        self.buffers.push(buffer.inner());
+    }
+
+    pub fn bind<'a>(&'a self) -> BoundVertexArray<'a> {
+        BoundVertexArray::new(self)
+    }
+
+    pub fn context(&self) -> Rc<glow::Context> {
+        self.gl.clone()
+    }
+}
+
+pub struct BoundVertexArray<'a> {
+    vao: &'a VertexArray,
+}
+
+impl<'a> BoundVertexArray<'a> {
+    fn new(vao: &'a VertexArray) -> BoundVertexArray<'a> {
+        unsafe { vao.gl.bind_vertex_array(Some(vao.inner)) };
+        BoundVertexArray { vao }
+    }
+}
+
+impl<'a> Drop for BoundVertexArray<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            self.vao.gl.bind_vertex_array(None);
+        }
     }
 }

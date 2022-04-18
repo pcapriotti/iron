@@ -1,3 +1,4 @@
+use super::vertex_array::BoundVertexArray;
 use glow::HasContext;
 use std::rc::Rc;
 
@@ -53,8 +54,8 @@ impl Drop for VertexBufferRef {
 
 #[derive(Clone)]
 pub struct VertexBuffer<T> {
-    pub inner: Rc<VertexBufferRef>,
-    pub size: i32,
+    inner: Rc<VertexBufferRef>,
+    size: i32,
     pub buffer: Vec<T>,
     phantom: std::marker::PhantomData<T>,
 }
@@ -70,7 +71,11 @@ impl<T: GL> VertexBuffer<T> {
         }
     }
 
-    pub fn enable(&self, i: u32) {
+    pub fn inner(&self) -> Rc<VertexBufferRef> {
+        self.inner.clone()
+    }
+
+    pub fn enable(&self, _bvao: &BoundVertexArray, i: u32) {
         unsafe {
             self.inner
                 .gl

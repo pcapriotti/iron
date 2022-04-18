@@ -31,20 +31,19 @@ impl Object {
         if num <= 0 {
             return;
         };
-        self.vao.gl.use_program(Some(self.program.inner));
-        self.vao.gl.bind_vertex_array(Some(self.vao.inner));
-        self.vao
-            .gl
-            .bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
+        let gl = self.vao.context();
+        let _bvao = self.vao.bind();
+
+        gl.use_program(Some(self.program.inner));
+        gl.bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.ebo.inner));
         let _btex = self.texture.as_ref().map(|t| t.bind());
-        self.vao.gl.draw_elements(
+        gl.draw_elements(
             glow::TRIANGLES,
             num as i32 * 6,
             glow::UNSIGNED_INT,
             0,
         );
-        self.vao.gl.bind_vertex_array(None);
-        self.vao.gl.use_program(None);
+        gl.use_program(None);
     }
 
     pub fn program(&mut self) -> &mut Program {
