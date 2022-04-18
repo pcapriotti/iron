@@ -77,7 +77,7 @@ impl Game {
     pub fn is_over(&self) -> bool {
         for (i, &value) in self.tiles.iter().enumerate() {
             if value.is_some() {
-                if i >= 1 && self.tiles[i - 1] == value {
+                if i % self.width() != 0 && self.tiles[i - 1] == value {
                     return false;
                 }
                 if i >= self.width() && self.tiles[i - self.width()] == value {
@@ -349,5 +349,40 @@ mod tests {
         let mut game2 = Game::new(5, 3);
         game2.tiles[4] = Some(1);
         assert_eq!(game, game2);
+    }
+
+    #[test]
+    fn test_game_not_over() {
+        let mut game = Game::new(4, 4);
+
+        for i in 0..16 {
+            assert!(!game.is_over());
+            game.tiles[i] = Some(i as u8);
+        }
+
+        assert!(game.is_over());
+    }
+
+    #[test]
+    fn test_gameover() {
+        let mut game = Game::new(4, 4);
+        game.tiles[0] = Some(1);
+        game.tiles[1] = Some(3);
+        game.tiles[2] = Some(5);
+        game.tiles[3] = Some(2);
+        game.tiles[4] = Some(2);
+        game.tiles[5] = Some(6);
+        game.tiles[6] = Some(8);
+        game.tiles[7] = Some(9);
+        game.tiles[8] = Some(3);
+        game.tiles[9] = Some(4);
+        game.tiles[10] = Some(5);
+        game.tiles[11] = Some(11);
+        game.tiles[12] = Some(1);
+        game.tiles[13] = Some(3);
+        game.tiles[14] = Some(9);
+        game.tiles[15] = Some(2);
+
+        assert!(game.is_over());
     }
 }
