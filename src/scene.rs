@@ -1,4 +1,4 @@
-use crate::game::{Game, Move};
+use crate::game::{Game, Move, Value};
 use crate::glyphs::Glyphs;
 use crate::graphics::Quad;
 use crate::layout::Layout;
@@ -54,16 +54,12 @@ impl Scene {
                     };
 
                     let rect = layout.rect(pos);
-                    Tile {
-                        value: Some(value),
-                        colour,
-                        rect,
-                    }
+                    (Tile { colour, rect }, value)
                 })
             })
             .collect::<Vec<_>>();
 
-        let mut merged = Vec::new();
+        let mut merged: Vec<(Tile, Option<Value>)> = Vec::new();
 
         for mv in moves.iter() {
             let src_point = (mv.src % layout.width, mv.src / layout.width);
@@ -76,15 +72,15 @@ impl Scene {
                 * layout.unit as f32
                 * time) as i32;
 
-            if let Some(tile) = &mut fg[mv.src] {
+            if let Some((tile, _)) = &mut fg[mv.src] {
                 tile.rect[0] =
                     std::cmp::max(tile.rect[0] as i32 + dx, 0) as u32;
                 tile.rect[1] =
                     std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
             }
             if mv.merge {
-                for t in fg[mv.src].take() {
-                    merged.push(t);
+                for (t, v) in fg[mv.src].take() {
+                    merged.push((t, Some(v)));
                 }
             }
         }
@@ -92,15 +88,19 @@ impl Scene {
         // collect all tiles
         let mut tiles = game
             .all_tiles()
-            .map(|(pos, _)| Tile {
-                value: None,
-                colour: [0.2, 0.2, 0.2],
-                rect: layout.rect(pos),
+            .map(|(pos, _)| {
+                (
+                    Tile {
+                        colour: [0.2, 0.2, 0.2],
+                        rect: layout.rect(pos),
+                    },
+                    None,
+                )
             })
             .collect::<Vec<_>>();
         for t in fg {
-            if let Some(t) = t {
-                tiles.push(t);
+            if let Some((t, v)) = t {
+                tiles.push((t, Some(v)));
             }
         }
 
@@ -109,27 +109,29 @@ impl Scene {
 
         // render screen
         if false {
-            self.screen.update(&[Tile {
-                colour: [0.5, 0.5, 0.5],
-                rect: [
-                    layout.origin.0,
-                    layout.origin.1,
-                    layout.size.0,
-                    layout.size.1,
-                ],
-                value: None,
-            }]);
+            self.screen.update(
+                [Tile {
+                    colour: [0.5, 0.5, 0.5],
+                    rect: [
+                        layout.origin.0,
+                        layout.origin.1,
+                        layout.size.0,
+                        layout.size.1,
+                    ],
+                }]
+                .iter(),
+            );
             unsafe { self.screen.render() };
         }
     }
 
-    fn render_tiles(&mut self, tiles: &[Tile]) {
-        self.tiles.update(tiles);
+    fn render_tiles(&mut self, tiles: &[(Tile, Option<Value>)]) {
+        self.tiles.update(tiles.iter().map(|(t, _)| t));
         unsafe {
             self.tiles.render();
         }
-        let gtiles = tiles.iter().filter_map(|t| {
-            t.value.map(|v| (t, format!("{}", (1 as u64) << v)))
+        let gtiles = tiles.iter().filter_map(|(t, v)| {
+            v.map(|v| (t, format!("{}", (1 as u64) << v)))
         });
 
         self.glyphs.update(gtiles);

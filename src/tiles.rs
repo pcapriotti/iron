@@ -1,4 +1,3 @@
-use crate::game::Value;
 use crate::graphics::util::rect;
 use crate::graphics::{Object, Program, Quad, VertexArray, VertexBuffer};
 use std::cell::RefCell;
@@ -14,7 +13,6 @@ pub struct Tiles {
 
 #[derive(Debug)]
 pub struct Tile {
-    pub value: Option<Value>,
     pub colour: [f32; 3],
     pub rect: [u32; 4],
 }
@@ -65,7 +63,7 @@ impl Tiles {
             .set_uniform("viewport", rect(0, 0, width as i32, height as i32));
     }
 
-    pub fn update(&mut self, tiles: &[Tile]) {
+    pub fn update<'a>(&mut self, tiles: impl Iterator<Item = &'a Tile>) {
         self.rects.buffer.truncate(0);
         self.colours.buffer.truncate(0);
         let mut count = 0;
