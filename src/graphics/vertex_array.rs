@@ -27,10 +27,6 @@ impl VertexArray {
     pub fn bind<'a>(&'a self) -> BoundVertexArray<'a> {
         BoundVertexArray::new(self)
     }
-
-    pub fn context(&self) -> Rc<glow::Context> {
-        self.gl.clone()
-    }
 }
 
 pub struct BoundVertexArray<'a> {

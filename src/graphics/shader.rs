@@ -43,6 +43,10 @@ impl Program {
             self.gl.use_program(None);
         }
     }
+
+    pub fn bind<'a>(&'a self) -> BoundProgram<'a> {
+        BoundProgram::new(self)
+    }
 }
 
 fn compile_shader_from_source(
@@ -64,5 +68,24 @@ fn compile_shader_from_source(
 impl Drop for Program {
     fn drop(&mut self) {
         unsafe { self.gl.delete_program(self.inner) };
+    }
+}
+
+pub struct BoundProgram<'a> {
+    program: &'a Program,
+}
+
+impl<'a> BoundProgram<'a> {
+    fn new(program: &'a Program) -> BoundProgram<'a> {
+        unsafe { program.gl.use_program(Some(program.inner)) };
+        BoundProgram { program }
+    }
+}
+
+impl<'a> Drop for BoundProgram<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            self.program.gl.use_program(None);
+        }
     }
 }

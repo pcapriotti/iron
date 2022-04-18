@@ -1,5 +1,5 @@
 use super::element_buffer::{BoundElementBuffer, ElementBufferRef};
-use super::shader::Program;
+use super::shader::{BoundProgram, Program};
 use super::texture::{BoundTexture, Texture};
 use super::vertex_array::{BoundVertexArray, VertexArray};
 use std::rc::Rc;
@@ -19,18 +19,16 @@ pub fn render_object(
     _bvao: &BoundVertexArray,
     _bebo: &BoundElementBuffer,
     _btex: &Option<BoundTexture>,
-    program: &Program,
+    _bprog: &BoundProgram,
     num: u32,
 ) {
     unsafe {
-        gl.use_program(Some(program.inner));
         gl.draw_elements(
             glow::TRIANGLES,
             num as i32 * 6,
             glow::UNSIGNED_INT,
             0,
         );
-        gl.use_program(None);
     }
 }
 
@@ -59,7 +57,7 @@ impl Object {
                 &self.vao.bind(),
                 &self.ebo.bind(),
                 &btex,
-                &self.program,
+                &self.program.bind(),
                 num,
             );
         }
