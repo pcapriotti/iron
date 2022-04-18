@@ -1,11 +1,12 @@
 use glow::HasContext;
+use std::rc::Rc;
 
 pub struct ShaderStorageBuffer {
     pub(super) inner: glow::NativeBuffer,
 }
 
 impl ShaderStorageBuffer {
-    pub fn new(gl: &glow::Context) -> Self {
+    pub fn new(gl: Rc<glow::Context>) -> Self {
         let ssbo = unsafe { gl.create_buffer().unwrap() };
         Self { inner: ssbo }
     }

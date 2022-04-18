@@ -2,6 +2,7 @@ use crate::graphics::{BoundTexture, ShaderStorageBuffer, Texture};
 use glow::HasContext;
 use rusttype::gpu_cache::Cache;
 use rusttype::{point, Font, Point, PositionedGlyph, Rect, Scale};
+use std::rc::Rc;
 
 const MAIN_FONT_ID: usize = 0;
 
@@ -50,7 +51,7 @@ impl GlyphCache {
     const HEIGHT: u32 = 1024;
     const SCALE: f32 = 100.0;
 
-    pub fn new(gl: &glow::Context, index: u32) -> Self {
+    pub fn new(gl: Rc<glow::Context>, index: u32) -> Self {
         let data = std::fs::read("/usr/share/fonts/TTF/Hack-Bold.ttf")
             .expect("Could not read font");
         let font: Font<'static> =
@@ -64,8 +65,8 @@ impl GlyphCache {
             .dimensions(Self::WIDTH, Self::HEIGHT)
             .build();
 
-        let buffer = ShaderStorageBuffer::new(gl);
-        buffer.bind(gl, index);
+        let buffer = ShaderStorageBuffer::new(gl.clone());
+        buffer.bind(&gl, index);
 
         Self {
             font,

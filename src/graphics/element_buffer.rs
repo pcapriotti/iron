@@ -1,4 +1,5 @@
 use glow::HasContext;
+use std::rc::Rc;
 
 pub struct ElementBuffer {
     pub(super) inner: glow::NativeBuffer,
@@ -6,7 +7,7 @@ pub struct ElementBuffer {
 }
 
 impl ElementBuffer {
-    pub fn new(gl: &glow::Context) -> Self {
+    pub fn new(gl: Rc<glow::Context>) -> Self {
         let ebo = unsafe { gl.create_buffer().unwrap() };
         Self {
             inner: ebo,

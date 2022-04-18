@@ -13,6 +13,7 @@ use glutin::event::{ElementState, Event, ModifiersState, VirtualKeyCode};
 use glutin::event_loop::ControlFlow;
 use layout::Layout;
 use scene::Scene;
+use std::rc::Rc;
 
 const INITIAL_SIZE: (u32, u32) = (800, 600);
 
@@ -41,11 +42,12 @@ fn main() {
         ctx.enable(glow::BLEND);
         ctx
     };
+    let gl = Rc::new(gl);
 
     let mut game = Game::new(4, 4);
     game.add_random_tile();
 
-    let mut scene = Scene::new(&gl, game.width(), game.height());
+    let mut scene = Scene::new(gl.clone(), game.width(), game.height());
 
     let mut layout = Layout::compute(
         INITIAL_SIZE.0,

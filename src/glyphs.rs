@@ -4,6 +4,7 @@ use crate::graphics::{
     VertexBuffer,
 };
 use crate::tiles::Tile;
+use std::rc::Rc;
 
 pub struct Glyphs {
     obj: Object,
@@ -17,24 +18,24 @@ pub struct Glyphs {
 }
 
 impl Glyphs {
-    pub fn new(gl: &glow::Context, max_glyphs: usize) -> Self {
-        let mut vao = VertexArray::new(gl);
+    pub fn new(gl: Rc<glow::Context>, max_glyphs: usize) -> Self {
+        let mut vao = VertexArray::new(gl.clone());
 
         let program = Program::new(
-            gl,
+            gl.clone(),
             include_bytes!("../shaders/glyph.v.glsl"),
             include_bytes!("../shaders/glyph.f.glsl"),
         );
 
-        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl, 2);
+        let mut vertices: VertexBuffer<f32> = VertexBuffer::new(gl.clone(), 2);
         for _ in 0..max_glyphs {
             vertices.buffer.extend_from_slice(&quad::VERTICES);
         }
-        vertices.update(gl, glow::STATIC_DRAW);
+        vertices.update(glow::STATIC_DRAW);
         vertices.buffer.truncate(0);
-        vao.add_buffer(gl, vertices);
+        vao.add_buffer(&gl, vertices);
 
-        let mut ebo = ElementBuffer::new(gl);
+        let mut ebo = ElementBuffer::new(gl.clone());
         let mut ebo_buffer = Vec::new();
         for i in 0..max_glyphs as u32 {
             ebo_buffer.extend_from_slice(&[
@@ -46,20 +47,20 @@ impl Glyphs {
                 3 + i * 4,
             ]);
         }
-        ebo.set_data(gl, &ebo_buffer);
+        ebo.set_data(&gl, &ebo_buffer);
 
         // cell rects
-        let cell_rects = VertexBuffer::new(gl, 4);
+        let cell_rects = VertexBuffer::new(gl.clone(), 4);
 
         // glyph indices
-        let glyph_indices = VertexBuffer::new(gl, 1);
+        let glyph_indices = VertexBuffer::new(gl.clone(), 1);
 
-        vao.add_buffer(gl, cell_rects.clone());
-        vao.add_buffer(gl, glyph_indices.clone());
+        vao.add_buffer(&gl, cell_rects.clone());
+        vao.add_buffer(&gl, glyph_indices.clone());
 
-        let mut cache = GlyphCache::new(gl, 0);
-        let (infos, texture) = cache.make_atlas(gl);
-        cache.upload_atlas(gl, &texture.bind(gl));
+        let mut cache = GlyphCache::new(gl.clone(), 0);
+        let (infos, texture) = cache.make_atlas(&gl);
+        cache.upload_atlas(&gl, &texture.bind(&gl));
 
         let obj = Object::new(vao, ebo, Some(texture), program);
 
@@ -145,8 +146,8 @@ impl Glyphs {
             }
         }
 
-        self.cell_rects.update(gl, glow::STATIC_DRAW);
-        self.glyph_indices.update(gl, glow::STATIC_DRAW);
+        self.cell_rects.update(glow::STATIC_DRAW);
+        self.glyph_indices.update(glow::STATIC_DRAW);
         self.num_instances = count;
     }
 

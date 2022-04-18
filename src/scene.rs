@@ -2,6 +2,7 @@ use crate::game::{Game, Move};
 use crate::glyphs::Glyphs;
 use crate::layout::Layout;
 use crate::tiles::{Tile, Tiles};
+use std::rc::Rc;
 
 pub struct Scene {
     tiles: Tiles,
@@ -9,10 +10,10 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(gl: &glow::Context, width: usize, height: usize) -> Scene {
+    pub fn new(gl: Rc<glow::Context>, width: usize, height: usize) -> Scene {
         Scene {
-            tiles: Tiles::new(gl, width * height * 3),
-            glyphs: Glyphs::new(gl, width * height * 10),
+            tiles: Tiles::new(gl.clone(), width * height * 3),
+            glyphs: Glyphs::new(gl.clone(), width * height * 10),
         }
     }
 

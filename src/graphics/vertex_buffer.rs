@@ -1,4 +1,5 @@
 use glow::HasContext;
+use std::rc::Rc;
 
 pub trait GL: bytemuck::Pod {
     fn ty() -> u32;
@@ -24,6 +25,7 @@ impl GL for f32 {
 
 #[derive(Clone)]
 pub struct VertexBuffer<T> {
+    gl: Rc<glow::Context>,
     pub inner: glow::NativeBuffer,
     pub size: i32,
     pub buffer: Vec<T>,
@@ -31,9 +33,10 @@ pub struct VertexBuffer<T> {
 }
 
 impl<T: GL> VertexBuffer<T> {
-    pub fn new(gl: &glow::Context, size: i32) -> Self {
+    pub fn new(gl: Rc<glow::Context>, size: i32) -> Self {
         let vbo = unsafe { gl.create_buffer().unwrap() };
         Self {
+            gl,
             inner: vbo,
             size,
             buffer: Vec::new(),
@@ -41,14 +44,18 @@ impl<T: GL> VertexBuffer<T> {
         }
     }
 
-    pub fn enable(&self, gl: &glow::Context, i: u32) {
+    pub fn enable(&self, i: u32) {
         unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner));
+            self.gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner));
             match T::ty() {
-                glow::INT => {
-                    gl.vertex_attrib_pointer_i32(i, self.size, T::ty(), 0, 0)
-                }
-                glow::FLOAT => gl.vertex_attrib_pointer_f32(
+                glow::INT => self.gl.vertex_attrib_pointer_i32(
+                    i,
+                    self.size,
+                    T::ty(),
+                    0,
+                    0,
+                ),
+                glow::FLOAT => self.gl.vertex_attrib_pointer_f32(
                     i,
                     self.size,
                     T::ty(),
@@ -58,24 +65,27 @@ impl<T: GL> VertexBuffer<T> {
                 ),
                 _ => panic!("Unsupported VertexBuffer type {}", T::ty()),
             };
-            gl.enable_vertex_attrib_array(i);
+            self.gl.enable_vertex_attrib_array(i);
         }
     }
 
-    pub fn update(&mut self, gl: &glow::Context, usage: u32) {
+    pub fn update(&mut self, usage: u32) {
         unsafe {
-            gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner));
-            gl.buffer_data_u8_slice(
+            self.gl.bind_buffer(glow::ARRAY_BUFFER, Some(self.inner));
+            self.gl.buffer_data_u8_slice(
                 glow::ARRAY_BUFFER,
                 bytemuck::cast_slice(&self.buffer),
                 usage,
             );
-            gl.bind_buffer(glow::ARRAY_BUFFER, None);
+            self.gl.bind_buffer(glow::ARRAY_BUFFER, None);
         }
     }
+}
 
-    #[allow(dead_code)]
-    pub fn cleanup(&mut self, gl: &glow::Context) {
-        unsafe { gl.delete_buffer(self.inner) }
+impl<T> Drop for VertexBuffer<T> {
+    fn drop(&mut self) {
+        unsafe {
+            // self.gl.delete_buffer(self.inner);
+        }
     }
 }

@@ -1,12 +1,13 @@
 use super::uniform::UniformValue;
 use glow::HasContext;
+use std::rc::Rc;
 
 pub struct Program {
     pub inner: glow::NativeProgram,
 }
 
 impl Program {
-    pub fn new(gl: &glow::Context, vert: &[u8], frag: &[u8]) -> Self {
+    pub fn new(gl: Rc<glow::Context>, vert: &[u8], frag: &[u8]) -> Self {
         Self {
             inner: unsafe {
                 let vert =
