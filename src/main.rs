@@ -98,34 +98,46 @@ fn main() {
                             {
                                 return;
                             }
-                            let dir = match key {
-                                Escape | Q => {
-                                    *cf = ControlFlow::Exit;
-                                    None
+                            if game.is_over() {
+                                match key {
+                                    Space | Return | N => {
+                                        game = Game::new(4, 4);
+                                        game.add_random_tile();
+                                        anim = None;
+                                        win.window().request_redraw();
+                                    }
+                                    _ => {}
+                                };
+                            } else {
+                                let dir = match key {
+                                    Escape | Q => {
+                                        *cf = ControlFlow::Exit;
+                                        None
+                                    }
+                                    Left | H => Some(Direction::W),
+                                    Down | J => Some(Direction::S),
+                                    Up | K => Some(Direction::N),
+                                    Right | L => Some(Direction::E),
+                                    _ => None,
+                                };
+                                // do not accept moves while another one is being animated
+                                if let Some(_) = anim {
+                                    return;
                                 }
-                                Left | H => Some(Direction::W),
-                                Down | J => Some(Direction::S),
-                                Up | K => Some(Direction::N),
-                                Right | L => Some(Direction::E),
-                                _ => None,
-                            };
-                            // do not accept moves while another one is being animated
-                            if let Some(_) = anim {
-                                return;
-                            }
-                            if let Some(d) = dir {
-                                let mut game2 = game.clone();
-                                let moves = game2.step(d);
-                                if !moves.is_empty() {
-                                    game2.add_random_tile();
-                                }
+                                if let Some(d) = dir {
+                                    let mut game2 = game.clone();
+                                    let moves = game2.step(d);
+                                    if !moves.is_empty() {
+                                        game2.add_random_tile();
+                                    }
 
-                                anim = Some(Animation::new(
-                                    animation::DEFAULT_DURATION,
-                                    moves,
-                                    game2,
-                                ));
-                                win.window().request_redraw();
+                                    anim = Some(Animation::new(
+                                        animation::DEFAULT_DURATION,
+                                        moves,
+                                        game2,
+                                    ));
+                                    win.window().request_redraw();
+                                }
                             }
                         }
                     }

@@ -108,7 +108,7 @@ impl Scene {
         self.render_tiles(&merged);
 
         // render screen
-        if false {
+        if game.is_over() {
             self.screen.update(
                 [Tile {
                     colour: [0.5, 0.5, 0.5],
@@ -129,7 +129,7 @@ impl Scene {
                         layout.origin.0,
                         layout.origin.1,
                         layout.size.0,
-                        (layout.size.1 as f32 * 0.6) as u32,
+                        layout.size.1,
                     ],
                     "Game over",
                 )]

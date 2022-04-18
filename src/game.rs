@@ -74,6 +74,22 @@ impl Game {
             .map(|(i, v)| ((i % self.width(), i / self.width()), v))
     }
 
+    pub fn is_over(&self) -> bool {
+        for (i, &value) in self.tiles.iter().enumerate() {
+            if value.is_some() {
+                if i >= 1 && self.tiles[i - 1] == value {
+                    return false;
+                }
+                if i >= self.width() && self.tiles[i - self.width()] == value {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
     pub fn step(&mut self, dir: Direction) -> Vec<Move> {
         let mut moves = Vec::new();
 
