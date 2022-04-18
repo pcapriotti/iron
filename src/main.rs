@@ -153,7 +153,7 @@ unsafe fn render(
     let start = Instant::now();
 
     gl.clear_color(0.148, 0.148, 0.148, 1.0);
-    gl.clear(glow::COLOR_BUFFER_BIT | glow::DEPTH_BUFFER_BIT);
+    gl.clear(glow::COLOR_BUFFER_BIT);
     if let Some(a) = &anim {
         let t = a.time().min(1.0);
         if t >= 1.0 {
