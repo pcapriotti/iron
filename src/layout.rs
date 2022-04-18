@@ -5,6 +5,8 @@ pub struct Layout {
     pub gap: u32,
     /// Bottom-left corner of the bottom-left tile.
     pub origin: (u32, u32),
+    /// Size of the whole viewport, in pixels
+    pub size: (u32, u32),
     /// Number of tiles on each row.
     pub width: usize,
     /// Number of tiles on each column.
@@ -33,6 +35,7 @@ impl Layout {
             unit,
             gap,
             origin: (x0, y0),
+            size: (pixel_width, pixel_height),
             width,
             height,
         }

@@ -14,7 +14,6 @@ pub struct Tiles {
 
 #[derive(Debug)]
 pub struct Tile {
-    pub pos: (usize, usize),
     pub value: Option<Value>,
     pub colour: [f32; 3],
     pub rect: [u32; 4],
@@ -25,6 +24,7 @@ impl Tiles {
         gl: Rc<glow::Context>,
         quad: Rc<RefCell<Quad>>,
         radius: f32,
+        alpha: f32,
     ) -> Self {
         let mut program = Program::new(
             gl.clone(),
@@ -32,6 +32,7 @@ impl Tiles {
             include_bytes!("../shaders/tile.f.glsl"),
         );
         program.set_uniform("radius", radius);
+        program.set_uniform("alpha", alpha);
 
         let mut vao = VertexArray::new(gl.clone());
         vao.add_buffer(quad.borrow().vbo());

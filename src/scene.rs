@@ -9,14 +9,20 @@ use std::rc::Rc;
 pub struct Scene {
     tiles: Tiles,
     glyphs: Glyphs,
+    screen: Tiles,
 }
 
 impl Scene {
     pub fn new(gl: Rc<glow::Context>) -> Scene {
         let quad = Rc::new(RefCell::new(Quad::new(gl.clone())));
-        let tiles = Tiles::new(gl.clone(), quad.clone(), 0.03);
+        let tiles = Tiles::new(gl.clone(), quad.clone(), 0.03, 1.0);
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
-        Scene { tiles, glyphs }
+        let screen = Tiles::new(gl.clone(), quad.clone(), 0.0, 0.75);
+        Scene {
+            tiles,
+            glyphs,
+            screen,
+        }
     }
 
     pub fn update(
@@ -49,7 +55,6 @@ impl Scene {
 
                     let rect = layout.rect(pos);
                     Tile {
-                        pos,
                         value: Some(value),
                         colour,
                         rect,
@@ -88,7 +93,6 @@ impl Scene {
         let mut tiles = game
             .all_tiles()
             .map(|(pos, _)| Tile {
-                pos,
                 value: None,
                 colour: [0.2, 0.2, 0.2],
                 rect: layout.rect(pos),
@@ -121,10 +125,26 @@ impl Scene {
                 self.glyphs.render();
             }
         }
+
+        // render screen
+        if false {
+            self.screen.update(&[Tile {
+                colour: [0.5, 0.5, 0.5],
+                rect: [
+                    layout.origin.0,
+                    layout.origin.1,
+                    layout.size.0,
+                    layout.size.1,
+                ],
+                value: None,
+            }]);
+            unsafe { self.screen.render() };
+        }
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
         self.tiles.resize(width, height);
         self.glyphs.resize(width, height);
+        self.screen.resize(width, height);
     }
 }
