@@ -56,11 +56,6 @@ impl Tiles {
         }
     }
 
-    pub unsafe fn render(&self) {
-        self.quad.borrow_mut().ensure(self.num_instances);
-        self.obj.render(self.num_instances);
-    }
-
     pub fn resize(&mut self, width: u32, height: u32) {
         self.obj
             .program()
@@ -92,5 +87,8 @@ impl Tiles {
         self.rects.update(glow::STATIC_DRAW);
         self.colours.update(glow::STATIC_DRAW);
         self.num_instances = count;
+
+        self.quad.borrow_mut().ensure(self.num_instances);
+        self.obj.render(self.num_instances);
     }
 }

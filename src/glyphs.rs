@@ -56,11 +56,6 @@ impl Glyphs {
         }
     }
 
-    pub unsafe fn render(&self) {
-        self.quad.borrow_mut().ensure(self.num_instances);
-        self.obj.render(self.num_instances);
-    }
-
     pub fn update<'a>(
         &mut self,
         texts: impl Iterator<Item = (&'a [u32; 4], impl AsRef<str>)>,
@@ -123,6 +118,8 @@ impl Glyphs {
         self.cell_rects.update(glow::STATIC_DRAW);
         self.glyph_indices.update(glow::STATIC_DRAW);
         self.num_instances = count;
+        self.quad.borrow_mut().ensure(self.num_instances);
+        self.obj.render(self.num_instances);
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {

@@ -123,7 +123,6 @@ impl Scene {
                 }]
                 .iter(),
             );
-            unsafe { self.screen.render() };
 
             self.glyphs.update(
                 [(
@@ -137,23 +136,16 @@ impl Scene {
                 )]
                 .into_iter(),
             );
-            unsafe { self.glyphs.render() };
         }
     }
 
     fn render_tiles(&mut self, tiles: &[(Tile, Option<Value>)]) {
         self.tiles.update(tiles.iter().map(|(t, _)| t));
-        unsafe {
-            self.tiles.render();
-        }
         let gtiles = tiles.iter().filter_map(|(t, v)| {
             v.map(|v| (&t.rect, format!("{}", (1 as u64) << v)))
         });
 
         self.glyphs.update(gtiles);
-        unsafe {
-            self.glyphs.render();
-        }
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
