@@ -65,7 +65,7 @@ fn main() {
     win.window().request_redraw();
 
     eloop.run(move |e, _target, cf| {
-        *cf = ControlFlow::Poll;
+        *cf = ControlFlow::Wait;
         match e {
             Event::LoopDestroyed => {}
             Event::RedrawRequested(_) => {
