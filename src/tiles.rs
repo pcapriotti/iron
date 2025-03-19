@@ -21,12 +21,7 @@ pub struct Tile {
 }
 
 impl Tiles {
-    pub fn new(
-        gl: Rc<glow::Context>,
-        quad: Rc<RefCell<Quad>>,
-        radius: f32,
-        alpha: f32,
-    ) -> Self {
+    pub fn new(gl: Rc<glow::Context>, quad: Rc<RefCell<Quad>>, radius: f32, alpha: f32) -> Self {
         let mut program = Program::new(
             gl.clone(),
             include_bytes!("../shaders/tile.v.glsl"),

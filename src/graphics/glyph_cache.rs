@@ -53,10 +53,9 @@ impl GlyphCache {
     const SCALE: f32 = 100.0;
 
     pub fn new(gl: Rc<glow::Context>, index: u32) -> Self {
-        let data = std::fs::read("/usr/share/fonts/TTF/Hack-Bold.ttf")
-            .expect("Could not read font");
-        let font: Font<'static> =
-            Font::try_from_vec(data).expect("Error loading font");
+        let data =
+            std::fs::read("/usr/share/fonts/TTF/Hack-Bold.ttf").expect("Could not read font");
+        let font: Font<'static> = Font::try_from_vec(data).expect("Error loading font");
         let scale = Scale {
             x: Self::SCALE,
             y: Self::SCALE,
@@ -146,13 +145,11 @@ impl GlyphCache {
                 let rect = Rect {
                     min: Point {
                         x: rect.min.x as f32 / Self::SCALE,
-                        y: (-rect.min.y as f32 - vmetrics.descent)
-                            / Self::SCALE,
+                        y: (-rect.min.y as f32 - vmetrics.descent) / Self::SCALE,
                     },
                     max: Point {
                         x: rect.max.x as f32 / Self::SCALE,
-                        y: (-rect.max.y as f32 - vmetrics.descent)
-                            / Self::SCALE,
+                        y: (-rect.max.y as f32 - vmetrics.descent) / Self::SCALE,
                     },
                 };
 

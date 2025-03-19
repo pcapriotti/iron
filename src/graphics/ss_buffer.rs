@@ -16,22 +16,16 @@ impl ShaderStorageBuffer {
         unsafe {
             self.gl
                 .bind_buffer(glow::SHADER_STORAGE_BUFFER, Some(self.inner));
-            self.gl.buffer_data_u8_slice(
-                glow::SHADER_STORAGE_BUFFER,
-                data,
-                glow::STATIC_DRAW,
-            );
+            self.gl
+                .buffer_data_u8_slice(glow::SHADER_STORAGE_BUFFER, data, glow::STATIC_DRAW);
             self.gl.bind_buffer(glow::SHADER_STORAGE_BUFFER, None);
         }
     }
 
     pub fn bind(&self, index: u32) {
         unsafe {
-            self.gl.bind_buffer_base(
-                glow::SHADER_STORAGE_BUFFER,
-                index,
-                Some(self.inner),
-            );
+            self.gl
+                .bind_buffer_base(glow::SHADER_STORAGE_BUFFER, index, Some(self.inner));
         }
     }
 }

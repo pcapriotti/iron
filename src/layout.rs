@@ -14,16 +14,8 @@ pub struct Layout {
 }
 
 impl Layout {
-    pub fn compute(
-        pixel_width: u32,
-        pixel_height: u32,
-        width: usize,
-        height: usize,
-    ) -> Self {
-        let unit = std::cmp::min(
-            pixel_width / width as u32,
-            pixel_height / height as u32,
-        );
+    pub fn compute(pixel_width: u32, pixel_height: u32, width: usize, height: usize) -> Self {
+        let unit = std::cmp::min(pixel_width / width as u32, pixel_height / height as u32);
         let gap = (unit as f32 * 0.07) as u32;
         let display_width = width as u32 * unit;
         let display_height = height as u32 * unit;

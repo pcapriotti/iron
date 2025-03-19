@@ -23,12 +23,7 @@ pub fn render_object(
     num: u32,
 ) {
     unsafe {
-        gl.draw_elements(
-            glow::TRIANGLES,
-            num as i32 * 6,
-            glow::UNSIGNED_INT,
-            0,
-        );
+        gl.draw_elements(glow::TRIANGLES, num as i32 * 6, glow::UNSIGNED_INT, 0);
     }
 }
 

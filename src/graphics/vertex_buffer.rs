@@ -49,9 +49,9 @@ impl VertexBufferRef {
                 glow::INT => self
                     .gl
                     .vertex_attrib_pointer_i32(i, self.size, self.ty, 0, 0),
-                glow::FLOAT => self.gl.vertex_attrib_pointer_f32(
-                    i, self.size, self.ty, false, 0, 0,
-                ),
+                glow::FLOAT => self
+                    .gl
+                    .vertex_attrib_pointer_f32(i, self.size, self.ty, false, 0, 0),
                 _ => panic!("Unsupported VertexBuffer type {}", self.ty),
             };
             self.gl.enable_vertex_attrib_array(i);

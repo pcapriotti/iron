@@ -38,9 +38,7 @@ fn main() {
         .unwrap();
     let win = unsafe { wctx.make_current().unwrap() };
     let gl = unsafe {
-        let ctx = glow::Context::from_loader_function(|s| {
-            win.get_proc_address(s) as *const _
-        });
+        let ctx = glow::Context::from_loader_function(|s| win.get_proc_address(s) as *const _);
         ctx.blend_func(glow::SRC_ALPHA, glow::ONE_MINUS_SRC_ALPHA);
         ctx.enable(glow::BLEND);
         ctx
@@ -53,12 +51,7 @@ fn main() {
 
     let mut scene = Scene::new(gl.clone(), &config);
 
-    let mut layout = Layout::compute(
-        INITIAL_SIZE.0,
-        INITIAL_SIZE.1,
-        game.width(),
-        game.height(),
-    );
+    let mut layout = Layout::compute(INITIAL_SIZE.0, INITIAL_SIZE.1, game.width(), game.height());
     let mut anim: Option<Animation<Vec<Move>>> = None;
     let mut modifiers = ModifiersState::empty();
 
@@ -69,25 +62,16 @@ fn main() {
         match e {
             Event::LoopDestroyed => {}
             Event::RedrawRequested(_) => {
-                unsafe {
-                    render(&gl, &layout, &mut scene, &mut anim, &mut game, &win)
-                };
+                unsafe { render(&gl, &layout, &mut scene, &mut anim, &mut game, &win) };
             }
             Event::WindowEvent { event: ref e, .. } => {
                 use glutin::event::WindowEvent;
                 match e {
                     WindowEvent::Resized(sz) => {
                         win.resize(*sz);
-                        unsafe {
-                            gl.viewport(0, 0, sz.width as i32, sz.height as i32)
-                        };
+                        unsafe { gl.viewport(0, 0, sz.width as i32, sz.height as i32) };
 
-                        layout = Layout::compute(
-                            sz.width,
-                            sz.height,
-                            game.width(),
-                            game.height(),
-                        );
+                        layout = Layout::compute(sz.width, sz.height, game.width(), game.height());
                         scene.resize(sz.width, sz.height);
                     }
                     WindowEvent::CloseRequested => *cf = ControlFlow::Exit,
@@ -97,18 +81,13 @@ fn main() {
                     WindowEvent::KeyboardInput { input, .. } => {
                         if let Some(key) = input.virtual_keycode {
                             use VirtualKeyCode::*;
-                            if input.state != ElementState::Pressed
-                                || !modifiers.is_empty()
-                            {
+                            if input.state != ElementState::Pressed || !modifiers.is_empty() {
                                 return;
                             }
                             if game.is_over() {
                                 match key {
                                     Space | Return | N => {
-                                        game = Game::new(
-                                            game.width(),
-                                            game.height(),
-                                        );
+                                        game = Game::new(game.width(), game.height());
                                         game.add_random_tile();
                                         anim = None;
                                         win.window().request_redraw();
@@ -139,9 +118,7 @@ fn main() {
                                     }
 
                                     anim = Some(Animation::new(
-                                        Duration::from_millis(
-                                            config.animation_duration_ms,
-                                        ),
+                                        Duration::from_millis(config.animation_duration_ms),
                                         moves,
                                         game2,
                                     ));
@@ -164,10 +141,7 @@ unsafe fn render(
     scene: &mut Scene,
     anim: &mut Option<Animation<Vec<Move>>>,
     game: &mut Game,
-    win: &glutin::ContextWrapper<
-        glutin::PossiblyCurrent,
-        glutin::window::Window,
-    >,
+    win: &glutin::ContextWrapper<glutin::PossiblyCurrent, glutin::window::Window>,
 ) {
     use std::time::Instant;
 

@@ -38,10 +38,9 @@ impl ElementBuffer {
 
     pub fn update(&mut self) {
         unsafe {
-            self.inner.gl.bind_buffer(
-                glow::ELEMENT_ARRAY_BUFFER,
-                Some(self.inner.inner),
-            );
+            self.inner
+                .gl
+                .bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(self.inner.inner));
             self.inner.gl.buffer_data_u8_slice(
                 glow::ELEMENT_ARRAY_BUFFER,
                 bytemuck::cast_slice(&self.buffer),

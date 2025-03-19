@@ -10,11 +10,9 @@ pub struct Program {
 impl Program {
     pub fn new(gl: Rc<glow::Context>, vert: &[u8], frag: &[u8]) -> Self {
         let prog = unsafe {
-            let vert =
-                compile_shader_from_source(&gl, glow::VERTEX_SHADER, vert);
+            let vert = compile_shader_from_source(&gl, glow::VERTEX_SHADER, vert);
 
-            let frag =
-                compile_shader_from_source(&gl, glow::FRAGMENT_SHADER, frag);
+            let frag = compile_shader_from_source(&gl, glow::FRAGMENT_SHADER, frag);
 
             let program = gl.create_program().unwrap();
             gl.attach_shader(program, vert);

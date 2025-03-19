@@ -9,13 +9,7 @@ pub trait UniformValue {
 
 impl UniformValue for Rect<i32> {
     unsafe fn set(&self, gl: &glow::Context, loc: Loc) {
-        gl.uniform_4_i32(
-            loc,
-            self.min.x,
-            self.min.y,
-            self.width(),
-            self.height(),
-        );
+        gl.uniform_4_i32(loc, self.min.x, self.min.y, self.width(), self.height());
     }
 }
 

@@ -16,8 +16,7 @@ pub struct Scene {
 impl Scene {
     pub fn new(gl: Rc<glow::Context>, config: &Config) -> Scene {
         let quad = Rc::new(RefCell::new(Quad::new(gl.clone())));
-        let tiles =
-            Tiles::new(gl.clone(), quad.clone(), config.tile_radius, 1.0);
+        let tiles = Tiles::new(gl.clone(), quad.clone(), config.tile_radius, 1.0);
         let glyphs = Glyphs::new(gl.clone(), quad.clone());
         let screen = Tiles::new(gl.clone(), quad.clone(), 0.0, 0.75);
         Scene {
@@ -27,13 +26,7 @@ impl Scene {
         }
     }
 
-    pub fn update(
-        &mut self,
-        layout: &Layout,
-        game: &Game,
-        moves: &Vec<Move>,
-        time: f32,
-    ) {
+    pub fn update(&mut self, layout: &Layout, game: &Game, moves: &Vec<Move>, time: f32) {
         // compute base tile positions and colours
         let mut fg = game
             .all_tiles()
@@ -67,18 +60,12 @@ impl Scene {
             let src_point = (mv.src % layout.width, mv.src / layout.width);
             let dst_point = (mv.dst % layout.width, mv.dst / layout.width);
 
-            let dx = ((dst_point.0 as f32 - src_point.0 as f32)
-                * layout.unit as f32
-                * time) as i32;
-            let dy = ((dst_point.1 as f32 - src_point.1 as f32)
-                * layout.unit as f32
-                * time) as i32;
+            let dx = ((dst_point.0 as f32 - src_point.0 as f32) * layout.unit as f32 * time) as i32;
+            let dy = ((dst_point.1 as f32 - src_point.1 as f32) * layout.unit as f32 * time) as i32;
 
             if let Some((tile, _)) = &mut fg[mv.src] {
-                tile.rect[0] =
-                    std::cmp::max(tile.rect[0] as i32 + dx, 0) as u32;
-                tile.rect[1] =
-                    std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
+                tile.rect[0] = std::cmp::max(tile.rect[0] as i32 + dx, 0) as u32;
+                tile.rect[1] = std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
             }
             if mv.merge {
                 for (t, v) in fg[mv.src].take() {
@@ -141,9 +128,9 @@ impl Scene {
 
     fn render_tiles(&mut self, tiles: &[(Tile, Option<Value>)]) {
         self.tiles.update(tiles.iter().map(|(t, _)| t));
-        let gtiles = tiles.iter().filter_map(|(t, v)| {
-            v.map(|v| (&t.rect, format!("{}", (1 as u64) << v)))
-        });
+        let gtiles = tiles
+            .iter()
+            .filter_map(|(t, v)| v.map(|v| (&t.rect, format!("{}", (1 as u64) << v))));
 
         self.glyphs.update(gtiles);
     }

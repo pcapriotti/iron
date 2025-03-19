@@ -1,7 +1,5 @@
 use crate::graphics::util::rect;
-use crate::graphics::{
-    GlyphCache, GlyphInfo, Object, Program, Quad, VertexArray, VertexBuffer,
-};
+use crate::graphics::{GlyphCache, GlyphInfo, Object, Program, Quad, VertexArray, VertexBuffer};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -41,8 +39,7 @@ impl Glyphs {
         let (infos, texture) = cache.make_atlas();
         cache.upload_atlas(&texture.bind());
 
-        let obj =
-            Object::new(gl, vao, quad.borrow().ebo(), Some(texture), program);
+        let obj = Object::new(gl, vao, quad.borrow().ebo(), Some(texture), program);
 
         Self {
             obj,
@@ -54,10 +51,7 @@ impl Glyphs {
         }
     }
 
-    pub fn update<'a>(
-        &mut self,
-        texts: impl Iterator<Item = (&'a [u32; 4], impl AsRef<str>)>,
-    ) {
+    pub fn update<'a>(&mut self, texts: impl Iterator<Item = (&'a [u32; 4], impl AsRef<str>)>) {
         self.cell_rects.buffer.truncate(0);
         self.glyph_indices.buffer.truncate(0);
         let mut count = 0;
@@ -102,12 +96,9 @@ impl Glyphs {
                 let x = rect[0] + margin.0 + x_offsets[i];
                 let y = rect[1] + margin.1;
                 for _ in 0..4 {
-                    self.cell_rects.buffer.extend_from_slice(&[
-                        x,
-                        y,
-                        unit as u32,
-                        unit as u32,
-                    ]);
+                    self.cell_rects
+                        .buffer
+                        .extend_from_slice(&[x, y, unit as u32, unit as u32]);
                 }
                 count += 1;
             }
