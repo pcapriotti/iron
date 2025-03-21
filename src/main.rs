@@ -24,14 +24,37 @@ use scene::Scene;
 use std::{num::NonZeroU32, rc::Rc, time::Duration};
 use winit::{
     application::ApplicationHandler,
-    event::{ElementState, Event, WindowEvent},
+    event::{ElementState, Event, KeyEvent, WindowEvent},
     event_loop::{ActiveEventLoop, ControlFlow, EventLoop},
-    keyboard::{Key, KeyCode, ModifiersState, NamedKey},
+    keyboard::{KeyCode, ModifiersState, NamedKey},
     raw_window_handle::HasWindowHandle,
     window::{Window, WindowId},
 };
 
 const INITIAL_SIZE: (u32, u32) = (800, 600);
+
+enum Key {
+    Named(NamedKey),
+    Character(char),
+}
+
+impl Key {
+    pub fn from_event(event: &KeyEvent) -> Vec<Self> {
+        let mut result = Vec::new();
+        match &event.text {
+            None => match event.logical_key {
+                winit::keyboard::Key::Named(n) => {
+                    result.push(Self::Named(n));
+                }
+                _ => (),
+            },
+            Some(t) => {
+                result.extend(t.chars().map(Key::Character));
+            }
+        }
+        result
+    }
+}
 
 struct Display {
     gl: Rc<glow::Context>,
@@ -79,10 +102,10 @@ impl ApplicationHandler for Display {
             }
             WindowEvent::KeyboardInput { ref event, .. } => {
                 if event.state == ElementState::Pressed {
-                    for c in event.text.iter().flat_map(|s| s.chars()) {
+                    for key in Key::from_event(event) {
                         if self.game.is_over() {
-                            match c {
-                                ' ' | '\n' | 'n' => {
+                            match key {
+                                Key::Character(' ' | '\r' | 'n') => {
                                     self.game = Game::new(self.game.width(), self.game.height());
                                     self.game.add_random_tile();
                                     self.animation = None;
@@ -91,19 +114,21 @@ impl ApplicationHandler for Display {
                                 _ => {}
                             };
                         } else {
-                            let dir = match (&event.logical_key, c) {
-                                (_, '\u{1b}' | 'q') => {
+                            let dir = match key {
+                                Key::Character('\u{1b}' | 'q') => {
                                     event_loop.exit();
                                     None
                                 }
-                                (Key::Named(NamedKey::ArrowLeft), _) | (_, 'h') => {
+                                Key::Named(NamedKey::ArrowLeft) | Key::Character('h') => {
                                     Some(Direction::W)
                                 }
-                                (Key::Named(NamedKey::ArrowDown), _) | (_, 'j') => {
+                                Key::Named(NamedKey::ArrowDown) | Key::Character('j') => {
                                     Some(Direction::S)
                                 }
-                                (Key::Named(NamedKey::ArrowUp), _) | (_, 'k') => Some(Direction::N),
-                                (Key::Named(NamedKey::ArrowRight), _) | (_, 'l') => {
+                                Key::Named(NamedKey::ArrowUp) | Key::Character('k') => {
+                                    Some(Direction::N)
+                                }
+                                Key::Named(NamedKey::ArrowRight) | Key::Character('l') => {
                                     Some(Direction::E)
                                 }
                                 _ => None,
