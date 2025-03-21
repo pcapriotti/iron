@@ -54,9 +54,9 @@ impl Game {
         let empty_indices = (0..self.tiles.len())
             .filter(|i| self.tiles[*i].is_none())
             .collect::<Vec<_>>();
-        let mut rng = rand::thread_rng();
-        let index = empty_indices[rng.gen_range(0..empty_indices.len())];
-        let value = if rng.gen_bool(0.1) { 2 } else { 1 };
+        let mut rng = rand::rng();
+        let index = empty_indices[rng.random_range(0..empty_indices.len())];
+        let value = if rng.random_bool(0.1) { 2 } else { 1 };
         (index, value)
     }
 

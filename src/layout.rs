@@ -9,8 +9,6 @@ pub struct Layout {
     pub size: (u32, u32),
     /// Number of tiles on each row.
     pub width: usize,
-    /// Number of tiles on each column.
-    pub height: usize,
 }
 
 impl Layout {
@@ -29,7 +27,6 @@ impl Layout {
             origin: (x0, y0),
             size: (display_width, display_height),
             width,
-            height,
         }
     }
 

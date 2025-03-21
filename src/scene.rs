@@ -68,7 +68,7 @@ impl Scene {
                 tile.rect[1] = std::cmp::max(tile.rect[1] as i32 + dy, 0) as u32;
             }
             if mv.merge {
-                for (t, v) in fg[mv.src].take() {
+                if let Some((t, v)) = fg[mv.src].take() {
                     merged.push((t, Some(v)));
                 }
             }

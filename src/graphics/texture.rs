@@ -51,14 +51,13 @@ impl Drop for Texture {
 }
 
 pub struct BoundTexture<'a> {
-    pub inner: &'a Texture,
     gl: &'a glow::Context,
 }
 
 impl<'a> BoundTexture<'a> {
     fn new(gl: &'a glow::Context, texture: &'a Texture) -> Self {
         unsafe { gl.bind_texture(glow::TEXTURE_2D, Some(texture.inner)) };
-        Self { inner: texture, gl }
+        Self { gl }
     }
 }
 
