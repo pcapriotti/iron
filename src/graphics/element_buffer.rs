@@ -60,7 +60,7 @@ pub struct BoundElementBuffer<'a> {
 }
 
 impl<'a> BoundElementBuffer<'a> {
-    fn new(ebo: &'a ElementBufferRef) -> BoundElementBuffer {
+    fn new(ebo: &'a ElementBufferRef) -> BoundElementBuffer<'a> {
         unsafe {
             ebo.gl
                 .bind_buffer(glow::ELEMENT_ARRAY_BUFFER, Some(ebo.inner));

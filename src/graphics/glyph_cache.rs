@@ -89,7 +89,7 @@ impl GlyphCache {
                     rect.height() as i32,
                     glow::RED,
                     glow::UNSIGNED_BYTE,
-                    glow::PixelUnpackData::Slice(data),
+                    glow::PixelUnpackData::Slice(Some(data)),
                 );
             })
             .unwrap();

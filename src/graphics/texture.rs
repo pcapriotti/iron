@@ -31,7 +31,7 @@ impl Texture {
                 0,
                 glow::RED,
                 glow::UNSIGNED_BYTE,
-                Some(&vec![0xff; (width * height) as usize]),
+                glow::PixelUnpackData::Slice(Some(&vec![0xff; (width * height) as usize])),
             );
             gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1);
             tex
